@@ -1093,6 +1093,10 @@ function newEmptyData() {
     entries: [],
     chips: [...DEFAULT_CHIPS],
     meta: { lastBackupAt: null, entryCountAtLastBackup: 0 },
+    // Tombstones for entries that were exported in a prior batch and then
+    // deleted locally. Flushed (and cleared) by the next copy-since-last-export
+    // so the downstream AI can drop them from its records.
+    pendingDeletions: [],
   };
 }
 
@@ -1145,6 +1149,9 @@ function migrate(raw) {
       lastBackupAt: typeof raw.meta.lastBackupAt === 'string' ? raw.meta.lastBackupAt : null,
       entryCountAtLastBackup: typeof raw.meta.entryCountAtLastBackup === 'number' ? raw.meta.entryCountAtLastBackup : 0,
     } : { lastBackupAt: null, entryCountAtLastBackup: 0 },
+    pendingDeletions: Array.isArray(raw.pendingDeletions)
+      ? raw.pendingDeletions.filter((t) => t && typeof t === 'object' && typeof t.timestamp === 'string')
+      : [],
   };
   // Future: if (data.schemaVersion < 2) { ...transform... ; data.schemaVersion = 2; }
   if (data.schemaVersion < SCHEMA_VERSION) data.schemaVersion = SCHEMA_VERSION;
@@ -1411,9 +1418,12 @@ function renderChips() {
 
 function renderActions() {
   const uncopied = state.data.entries.filter((e) => !e.exported).length;
+  const deletions = Array.isArray(state.data.pendingDeletions) ? state.data.pendingDeletions.length : 0;
   const btn = document.getElementById('copy-since-btn');
-  btn.textContent = `Copy since last export (${uncopied})`;
-  btn.disabled = uncopied === 0;
+  btn.textContent = deletions > 0
+    ? `Copy since last export (${uncopied} new, ${deletions} deleted)`
+    : `Copy since last export (${uncopied})`;
+  btn.disabled = uncopied === 0 && deletions === 0;
 }
 
 function renderEntries() {
@@ -1555,7 +1565,9 @@ function renderBackupBanner() {
   if (existing) existing.remove();
 
   const uncopied = state.data.entries.filter((e) => !e.exported).length;
-  if (uncopied < UNCOPIED_BANNER_THRESHOLD) return;
+  const deletions = Array.isArray(state.data.pendingDeletions) ? state.data.pendingDeletions.length : 0;
+  const pending = uncopied + deletions;
+  if (pending < UNCOPIED_BANNER_THRESHOLD) return;
 
   const banner = document.createElement('div');
   banner.id = 'backup-banner';
@@ -1567,8 +1579,9 @@ function renderBackupBanner() {
       <button class="banner-dismiss">Later</button>
     </span>
   `;
-  banner.querySelector('.banner-text').textContent =
-    `${uncopied} uncopied ${uncopied === 1 ? 'entry' : 'entries'} — back up now?`;
+  banner.querySelector('.banner-text').textContent = deletions > 0
+    ? `${uncopied} new + ${deletions} deleted — back up now?`
+    : `${uncopied} uncopied ${uncopied === 1 ? 'entry' : 'entries'} — back up now?`;
   // "Back up" on this banner == copy since last export (the user's effective
   // backup is sending uncopied entries downstream to their AI).
   banner.querySelector('.btn-primary').addEventListener('click', () => {
@@ -1691,6 +1704,24 @@ async function deleteEntry() {
   const idx = state.data.entries.findIndex((e) => e.id === id);
   if (idx < 0) { closeModal(); return; }
 
+  const entry = state.data.entries[idx];
+
+  // If this entry was already delivered downstream (exported, or edited after
+  // being exported), record a tombstone so the next copy-since-last-export
+  // tells the AI to remove it from its records. Use the timestamp the AI
+  // actually saw (lastExportedTimestamp) — the user may have edited the
+  // timestamp since.
+  const wasDelivered = entry.exported === true || entry.wasEditedAfterExport === true;
+  let pushedTombstone = false;
+  if (wasDelivered) {
+    if (!Array.isArray(state.data.pendingDeletions)) state.data.pendingDeletions = [];
+    state.data.pendingDeletions.push({
+      timestamp: entry.lastExportedTimestamp || entry.timestamp,
+      deletedAt: nowISO(),
+    });
+    pushedTombstone = true;
+  }
+
   // Take a snapshot before destructive change
   await takeSnapshot(JSON.parse(JSON.stringify(state.data)));
 
@@ -1698,6 +1729,7 @@ async function deleteEntry() {
   const ok = await save({ snapshot: false });
   if (!ok) {
     state.data.entries.splice(idx, 0, removed);
+    if (pushedTombstone) state.data.pendingDeletions.pop();
     return;
   }
   state.deletingId = null;
@@ -1860,13 +1892,14 @@ function openChipsEditor() {
 // ============================================================================
 // Copy / Export
 // ============================================================================
-function buildExportText(entries) {
+function buildExportText(entries, deletions = []) {
   // Oldest first for chronological reading; one entry per line with [YYYY-MM-DD HH:MM] prefix.
   // Newlines inside an entry are preserved — parsers can split on /^\[\d{4}/m.
   const sorted = [...entries].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   const hasRevisions = sorted.some((e) => e.wasEditedAfterExport);
+  const hasDeletions = Array.isArray(deletions) && deletions.length > 0;
 
-  const lines = sorted.map((e) => {
+  const entryLines = sorted.map((e) => {
     const ts = formatExportTimestamp(e.timestamp);
     if (!e.wasEditedAfterExport) return `[${ts}] ${e.text}`;
     const tsChanged = e.lastExportedTimestamp && e.lastExportedTimestamp !== e.timestamp;
@@ -1876,19 +1909,37 @@ function buildExportText(entries) {
     return `[${ts}] ${note} ${e.text}`;
   });
 
-  if (hasRevisions) {
-    return [
-      '# INSTRUCTIONS FOR THE READING ASSISTANT',
-      '# Lines marked {REVISION ...} are corrected versions of entries you have already',
-      '# received in a previous export. For each {REVISION} line, locate the prior entry',
-      '# it identifies (by the timestamp inside the note, or by the line\'s own timestamp',
-      '# if no prior timestamp is given) and OVERWRITE that prior entry with this version.',
-      '# Do not keep both copies; the {REVISION} line is the source of truth.',
-      '',
-      ...lines,
-    ].join('\n');
+  const deletionLines = hasDeletions
+    ? [...deletions]
+        .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+        .map((d) => `[${formatExportTimestamp(d.timestamp)}] {DELETED — remove the previously exported entry at this timestamp from your records}`)
+    : [];
+
+  const allLines = [...entryLines, ...deletionLines];
+
+  if (hasRevisions || hasDeletions) {
+    const header = ['# INSTRUCTIONS FOR THE READING ASSISTANT'];
+    if (hasRevisions) {
+      header.push(
+        '# Lines marked {REVISION ...} are corrected versions of entries you have already',
+        '# received in a previous export. For each {REVISION} line, locate the prior entry',
+        '# it identifies (by the timestamp inside the note, or by the line\'s own timestamp',
+        '# if no prior timestamp is given) and OVERWRITE that prior entry with this version.',
+        '# Do not keep both copies; the {REVISION} line is the source of truth.',
+      );
+    }
+    if (hasDeletions) {
+      header.push(
+        '# Lines marked {DELETED ...} identify entries that were sent to you in a previous',
+        '# export and have since been deleted by the user. For each {DELETED} line, locate',
+        '# the prior entry at the timestamp shown and REMOVE IT ENTIRELY from your records.',
+        '# Do not keep a copy and do not treat it as a new entry.',
+      );
+    }
+    header.push('');
+    return [...header, ...allLines].join('\n');
   }
-  return lines.join('\n');
+  return allLines.join('\n');
 }
 
 async function copyText(text) {
@@ -1916,9 +1967,13 @@ async function copyText(text) {
 
 async function copySinceLastExport() {
   const uncopied = state.data.entries.filter((e) => !e.exported);
-  if (uncopied.length === 0) { notify('Nothing new to copy.'); return; }
+  const pendingDeletions = Array.isArray(state.data.pendingDeletions) ? state.data.pendingDeletions : [];
+  if (uncopied.length === 0 && pendingDeletions.length === 0) {
+    notify('Nothing new to copy.');
+    return;
+  }
 
-  const text = buildExportText(uncopied);
+  const text = buildExportText(uncopied, pendingDeletions);
   const ok = await copyText(text);
   if (!ok) { notify('Copy to clipboard failed.', 'error'); return; }
 
@@ -1929,6 +1984,7 @@ async function copySinceLastExport() {
     wasEditedAfterExport: e.wasEditedAfterExport,
     lastExportedTimestamp: e.lastExportedTimestamp,
   }));
+  const backupDeletions = pendingDeletions.slice();
   const now = nowISO();
   for (const e of state.data.entries) {
     if (!e.exported) {
@@ -1941,6 +1997,10 @@ async function copySinceLastExport() {
       e.lastExportedTimestamp = e.timestamp;
     }
   }
+  // Deletions have now been delivered — the AI will remove them from its
+  // records, so we no longer need to track them locally.
+  state.data.pendingDeletions = [];
+
   const saved = await save();
   if (!saved) {
     for (const b of backup) {
@@ -1952,9 +2012,13 @@ async function copySinceLastExport() {
         e.lastExportedTimestamp = b.lastExportedTimestamp;
       }
     }
+    state.data.pendingDeletions = backupDeletions;
     return;
   }
-  notify(`Copied ${uncopied.length} ${uncopied.length === 1 ? 'entry' : 'entries'} and marked as exported.`, 'ok');
+  const parts = [];
+  if (uncopied.length) parts.push(`${uncopied.length} ${uncopied.length === 1 ? 'entry' : 'entries'}`);
+  if (pendingDeletions.length) parts.push(`${pendingDeletions.length} ${pendingDeletions.length === 1 ? 'deletion' : 'deletions'}`);
+  notify(`Copied ${parts.join(' + ')} and marked as exported.`, 'ok');
   render();
 }
 
