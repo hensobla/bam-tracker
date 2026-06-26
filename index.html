@@ -302,6 +302,23 @@ button, input, textarea { font-family: inherit; color: inherit; }
 }
 #entry-now-btn:hover { background: #eef0f3; }
 #entry-now-btn:active { transform: scale(0.97); }
+
+.copy-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--accent);
+  border-radius: 999px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-left: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
 #entry-add-btn {
   width: 44px;
   height: 44px;
@@ -905,9 +922,9 @@ button, input, textarea { font-family: inherit; color: inherit; }
   <section class="capture">
     <textarea id="entry-textarea" rows="3" placeholder="Add new entry" autocapitalize="sentences"></textarea>
     <div class="capture-row">
+      <button type="button" id="entry-now-btn" class="hidden" aria-label="Reset to current date and time">Now</button>
       <input type="date" id="entry-date" aria-label="Date">
       <input type="time" id="entry-time" aria-label="Time">
-      <button type="button" id="entry-now-btn" class="hidden" aria-label="Reset to current date and time">Now</button>
       <button id="entry-add-btn" class="btn btn-primary" aria-label="Add entry"></button>
     </div>
     <div id="chips-row" class="chips-row"></div>
@@ -1443,6 +1460,7 @@ function render() {
   renderActions();
   renderEntries();
   renderBackupBanner();
+  updateStatusIndicator();
 }
 
 function renderChips() {
@@ -1469,11 +1487,13 @@ function renderChips() {
 function renderActions() {
   const uncopied = state.data.entries.filter((e) => !e.exported).length;
   const deletions = Array.isArray(state.data.pendingDeletions) ? state.data.pendingDeletions.length : 0;
+  const total = uncopied + deletions;
   const btn = document.getElementById('copy-since-btn');
-  btn.textContent = deletions > 0
-    ? `Copy since last export (${uncopied} new, ${deletions} deleted)`
-    : `Copy since last export (${uncopied})`;
-  btn.disabled = uncopied === 0 && deletions === 0;
+  btn.innerHTML = total > 0
+    ? `Copy since last export <span class="copy-count">${total}</span>`
+    : `Copy since last export`;
+  btn.title = deletions > 0 ? `${uncopied} new ${uncopied === 1 ? 'entry' : 'entries'}, ${deletions} ${deletions === 1 ? 'deletion' : 'deletions'}` : '';
+  btn.disabled = total === 0;
 }
 
 function renderEntries() {
@@ -2390,18 +2410,59 @@ async function openSnapshotsMenu() {
 // ============================================================================
 // Persistence status
 // ============================================================================
-async function checkPersistence() {
+function relativeTimeAgo(iso) {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 45 * 1000) return 'just now';
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return days + 'd ago';
+  const months = Math.floor(days / 30);
+  return months + 'mo ago';
+}
+
+// Header status indicator: a colored dot (data-safety signal) plus a short
+// glanceable activity line ("Last entry 12m ago"). The title attribute carries
+// the long-form persistence explanation that used to be the visible text.
+function updateStatusIndicator() {
   const indicator = document.getElementById('persistence-status');
+  if (!indicator || !state.data) return;
+
+  let dotClass;
+  let title;
   if (state.previewMode) {
-    indicator.innerHTML = '<span class="dot dot-warn"></span> Preview only';
-    indicator.title = "This window can't save anything. Open the file directly in your browser to use it for real.";
-    return;
+    dotClass = 'dot-warn';
+    title = "This window can't save anything — nothing you do persists. Open the app from a real URL (or open the file directly in your browser) to use it for real.";
+  } else if (state.storagePersistent === true) {
+    dotClass = 'dot-ok';
+    title = "Your browser has promised not to evict this app's data under storage pressure.";
+  } else {
+    dotClass = 'dot-warn';
+    title = "Your browser may delete this app's data under storage pressure or after a period of inactivity. Use Backup regularly.";
   }
-  if (!navigator.storage || !navigator.storage.persisted) {
-    indicator.innerHTML = '<span class="dot dot-warn"></span> Back up often';
-    indicator.title = "This browser can't promise to keep your data safe long-term. Back up regularly using the Backup button.";
-    return;
+
+  let text;
+  if (state.previewMode) {
+    text = 'Preview · changes lost on reload';
+  } else if (!state.data.entries || state.data.entries.length === 0) {
+    text = 'No entries yet';
+  } else {
+    let newestTs = '';
+    for (const e of state.data.entries) {
+      if (typeof e.timestamp === 'string' && e.timestamp > newestTs) newestTs = e.timestamp;
+    }
+    text = newestTs ? 'Last entry ' + relativeTimeAgo(newestTs) : 'No entries yet';
   }
+
+  indicator.innerHTML = `<span class="dot ${dotClass}"></span> ${text}`;
+  indicator.title = `${title}\n\n${state.data.entries.length} ${state.data.entries.length === 1 ? 'entry' : 'entries'} stored.`;
+}
+
+async function checkPersistence() {
+  if (state.previewMode) { updateStatusIndicator(); return; }
+  if (!navigator.storage || !navigator.storage.persisted) { updateStatusIndicator(); return; }
   let persisted = false;
   try {
     persisted = await navigator.storage.persisted();
@@ -2412,13 +2473,7 @@ async function checkPersistence() {
     console.error('persist() failed', e);
   }
   state.storagePersistent = persisted;
-  if (persisted) {
-    indicator.innerHTML = '<span class="dot dot-ok"></span> Saved safely';
-    indicator.title = "Your browser has promised not to evict this app's data under storage pressure.";
-  } else {
-    indicator.innerHTML = '<span class="dot dot-warn"></span> Back up often';
-    indicator.title = "Your browser may delete this app's data under storage pressure or after a period of inactivity. Use the Backup button regularly.";
-  }
+  updateStatusIndicator();
 }
 
 // ============================================================================
@@ -2597,6 +2652,8 @@ async function init() {
     if (focused !== dateEl && focused !== timeEl && ta.value.trim() === '') {
       resetDateTimeToNow();
     }
+    // Keep "Last entry X ago" fresh even when nothing is happening.
+    updateStatusIndicator();
   }, 30 * 1000);
 
   render();
