@@ -737,7 +737,7 @@ button, input, textarea { font-family: inherit; color: inherit; }
 .chip-edit-row {
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: flex-start;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -752,7 +752,7 @@ button, input, textarea { font-family: inherit; color: inherit; }
   position: relative;
   z-index: 5;
 }
-.chip-edit-row input {
+.chip-edit-row .chip-input {
   flex: 1;
   background: transparent;
   border: 1px solid transparent;
@@ -763,8 +763,12 @@ button, input, textarea { font-family: inherit; color: inherit; }
   color: var(--text);
   transition: background 0.12s, border-color 0.12s;
   min-width: 0;
+  font-family: inherit;
+  line-height: 1.4;
+  resize: none;
+  overflow-y: auto;
 }
-.chip-edit-row input:focus { background: var(--surface-2); border-color: var(--border-strong); }
+.chip-edit-row .chip-input:focus { background: var(--surface-2); border-color: var(--border-strong); }
 
 .chip-drag-handle {
   background: transparent;
@@ -932,7 +936,17 @@ const MAX_SNAPSHOTS = 15;
 const SNAPSHOT_MIN_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 const SNAPSHOT_LOAD_AGE_MS = 60 * 60 * 1000;     // 1 hour
 const UNCOPIED_BANNER_THRESHOLD = 30; // uncopied entries before the "back up" nag shows
-const DEFAULT_CHIPS = ['Chole', 'Psyllium', 'Coffee'];
+// Chips can be single-line ("Chole" — label and inserted text are both "Chole")
+// or multi-line, in which case the first line is what's shown on the chip and
+// the remaining lines are what's inserted into the entry field. This keeps the
+// schema as `string[]` and lets any chip become a template later just by
+// editing it.
+const DEFAULT_CHIPS = [
+  'Poo 💩\nPoop\nUrgency:\nVolume:\nConsistency:\nCompleteness:\nWipe:',
+  'Chole',
+  'Psyllium',
+  'Coffee',
+];
 
 // ============================================================================
 // Time / format helpers
@@ -944,6 +958,21 @@ function generateId() {
 }
 
 function nowISO() { return new Date().toISOString(); }
+
+// Split a chip string into { label, inject }. Single-line chips have the same
+// value for both. Multi-line chips: first line is the chip's label, the rest is
+// the template that gets inserted into the entry field.
+function chipLabelAndInject(chip) {
+  if (typeof chip !== 'string') return null;
+  const nl = chip.indexOf('\n');
+  if (nl === -1) {
+    const t = chip.trim();
+    return t ? { label: t, inject: t } : null;
+  }
+  const label = chip.slice(0, nl).trim();
+  const inject = chip.slice(nl + 1);
+  return label ? { label, inject } : null;
+}
 
 function toDateInput(iso) {
   const d = new Date(iso);
@@ -1400,12 +1429,14 @@ function render() {
 function renderChips() {
   const row = document.getElementById('chips-row');
   row.innerHTML = '';
-  for (const chip of state.data.chips) {
+  for (const rawChip of state.data.chips) {
+    const parsed = chipLabelAndInject(rawChip);
+    if (!parsed) continue;
     const btn = document.createElement('button');
     btn.className = 'chip';
     btn.type = 'button';
-    btn.textContent = chip;
-    btn.addEventListener('click', () => injectChip(chip));
+    btn.textContent = parsed.label;
+    btn.addEventListener('click', () => injectChip(parsed.inject));
     row.appendChild(btn);
   }
   const edit = document.createElement('button');
@@ -1744,9 +1775,15 @@ async function deleteEntry() {
 function injectChip(chipText) {
   const ta = document.getElementById('entry-textarea');
   const current = ta.value;
+  const isMultiline = chipText.includes('\n');
   let prefix = '';
-  if (current && !/\s$/.test(current)) prefix = ' ';
-  ta.value = current + prefix + chipText + ' ';
+  if (current) {
+    prefix = isMultiline
+      ? (current.endsWith('\n') ? '' : '\n')
+      : (/\s$/.test(current) ? '' : ' ');
+  }
+  const suffix = isMultiline ? '' : ' ';
+  ta.value = current + prefix + chipText + suffix;
   ta.focus();
   ta.setSelectionRange(ta.value.length, ta.value.length);
   autoResize(ta);
@@ -1756,7 +1793,7 @@ function openChipsEditor() {
   let chips = [...state.data.chips];
   openModal(`
     <h3>Edit quick-add chips</h3>
-    <p class="modal-help">Drag the grip to reorder. Tapping a chip in the main view injects its text into the entry field — it does not submit.</p>
+    <p class="modal-help">Drag the grip to reorder. Single-line chips insert their own text. For a template, put the chip's label on the first line and the text it should insert on the lines below — the label is the only part shown on the chip.</p>
     <div class="chips-editor" id="chips-editor"></div>
     <button class="btn btn-secondary" id="add-chip-btn">Add chip</button>
     <div class="modal-actions">
@@ -1770,7 +1807,7 @@ function openChipsEditor() {
   function syncFromDOM() {
     const editor = document.getElementById('chips-editor');
     const rows = editor.querySelectorAll('.chip-edit-row');
-    chips = Array.from(rows).map((r) => r.querySelector('input').value);
+    chips = Array.from(rows).map((r) => r.querySelector('.chip-input').value);
   }
 
   function renderEditor() {
@@ -1797,10 +1834,19 @@ function openChipsEditor() {
     handle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>';
     attachDrag(handle, row);
 
-    const input = document.createElement('input');
-    input.type = 'text';
+    const input = document.createElement('textarea');
+    input.className = 'chip-input';
     input.value = text;
-    input.placeholder = 'chip name';
+    input.placeholder = 'chip text (multi-line = template)';
+    input.rows = 1;
+    input.spellcheck = false;
+    const fit = () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+    };
+    input.addEventListener('input', fit);
+    // Defer to next frame so the row is in the DOM and scrollHeight is correct.
+    requestAnimationFrame(fit);
 
     const remove = document.createElement('button');
     remove.type = 'button';
@@ -2401,7 +2447,10 @@ function closeModal() {
 // ============================================================================
 function autoResize(textarea) {
   textarea.style.height = 'auto';
-  textarea.style.height = Math.min(textarea.scrollHeight, 240) + 'px';
+  // Generous cap — has to comfortably fit multi-line chip templates (Poo's
+  // is 6 lines) without scrolling, and still leave room for an entry the
+  // user fleshes out from there. Past this, the textarea internally scrolls.
+  textarea.style.height = Math.min(textarea.scrollHeight, 480) + 'px';
 }
 
 // ============================================================================
