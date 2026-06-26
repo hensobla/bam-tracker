@@ -282,8 +282,26 @@ button, input, textarea { font-family: inherit; color: inherit; }
 #entry-date:hover, #entry-time:hover { background: #eef0f3; }
 #entry-date:focus, #entry-time:focus { background: var(--surface); border-color: var(--border-strong); }
 @media (prefers-color-scheme: dark) {
-  #entry-date:hover, #entry-time:hover { background: #232a33; }
+  #entry-date:hover, #entry-time:hover, #entry-now-btn:hover { background: #232a33; }
 }
+#entry-now-btn {
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.12s, border-color 0.12s, transform 0.05s;
+  -webkit-tap-highlight-color: transparent;
+}
+#entry-now-btn:hover { background: #eef0f3; }
+#entry-now-btn:active { transform: scale(0.97); }
 #entry-add-btn {
   width: 44px;
   height: 44px;
@@ -889,6 +907,7 @@ button, input, textarea { font-family: inherit; color: inherit; }
     <div class="capture-row">
       <input type="date" id="entry-date" aria-label="Date">
       <input type="time" id="entry-time" aria-label="Time">
+      <button type="button" id="entry-now-btn" class="hidden" aria-label="Reset to current date and time">Now</button>
       <button id="entry-add-btn" class="btn btn-primary" aria-label="Add entry"></button>
     </div>
     <div id="chips-row" class="chips-row"></div>
@@ -1654,6 +1673,8 @@ async function addEntry() {
   const cur = nowISO();
   dateEl.value = toDateInput(cur);
   timeEl.value = toTimeInput(cur);
+  const nowBtn = document.getElementById('entry-now-btn');
+  if (nowBtn) nowBtn.classList.add('hidden');
   render();
   ta.focus();
 }
@@ -2513,10 +2534,30 @@ async function init() {
   const dateEl = document.getElementById('entry-date');
   const timeEl = document.getElementById('entry-time');
   const addBtn = document.getElementById('entry-add-btn');
+  const nowBtn = document.getElementById('entry-now-btn');
 
-  const cur = nowISO();
-  dateEl.value = toDateInput(cur);
-  timeEl.value = toTimeInput(cur);
+  // Set the date/time inputs to the current time and show/hide the Now button
+  // accordingly. Used on load, after Add, by the periodic refresh, by the Now
+  // button itself, and as the recovery path when the OS picker's "Reset"
+  // wipes the field to blank on iOS.
+  function resetDateTimeToNow() {
+    const c = nowISO();
+    dateEl.value = toDateInput(c);
+    timeEl.value = toTimeInput(c);
+    nowBtn.classList.add('hidden');
+  }
+
+  // Reveal the Now button whenever the picker is no longer on the current
+  // minute. Cheaper than comparing Date objects — comparing the same string
+  // form the inputs use.
+  function updateNowButton() {
+    if (!dateEl.value || !timeEl.value) { nowBtn.classList.add('hidden'); return; }
+    const c = nowISO();
+    const isNow = dateEl.value === toDateInput(c) && timeEl.value === toTimeInput(c);
+    nowBtn.classList.toggle('hidden', isNow);
+  }
+
+  resetDateTimeToNow();
 
   ta.addEventListener('input', () => autoResize(ta));
   ta.addEventListener('keydown', (e) => {
@@ -2526,6 +2567,18 @@ async function init() {
     }
   });
   addBtn.addEventListener('click', addEntry);
+
+  // If the OS picker's Reset action clears either field, snap both back to
+  // current. Otherwise just keep the Now button in sync with the value.
+  function onDateTimeChange() {
+    if (!dateEl.value || !timeEl.value) resetDateTimeToNow();
+    else updateNowButton();
+  }
+  dateEl.addEventListener('change', onDateTimeChange);
+  timeEl.addEventListener('change', onDateTimeChange);
+  dateEl.addEventListener('input', onDateTimeChange);
+  timeEl.addEventListener('input', onDateTimeChange);
+  nowBtn.addEventListener('click', () => { resetDateTimeToNow(); ta.focus(); });
 
   document.getElementById('copy-since-btn').addEventListener('click', copySinceLastExport);
   document.getElementById('more-btn').addEventListener('click', openMoreMenu);
@@ -2542,9 +2595,7 @@ async function init() {
   setInterval(() => {
     const focused = document.activeElement;
     if (focused !== dateEl && focused !== timeEl && ta.value.trim() === '') {
-      const c = nowISO();
-      dateEl.value = toDateInput(c);
-      timeEl.value = toTimeInput(c);
+      resetDateTimeToNow();
     }
   }, 30 * 1000);
 
