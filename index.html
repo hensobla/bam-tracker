@@ -1,0 +1,2446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0a09" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BAM Tracker">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="BAM Tracker">
+<title>BAM Tracker</title>
+<link rel="icon" href="images/icon.png">
+<link rel="apple-touch-icon" href="images/icon.png">
+
+<style>
+:root {
+  --bg: #f3f6f9;
+  --surface: #ffffff;
+  --surface-2: #f4f5f7;
+  --text: #0a0a0a;
+  --text-muted: #6b7280;
+  --text-soft: #9ca3af;
+  --border: #e7eaee;
+  --border-strong: #d1d5db;
+
+  --accent: #f97316;          /* the one bright orange — submit/primary */
+  --accent-hover: #ea580c;
+  --accent-text: #ffffff;
+  --accent-soft: #fff4ec;
+
+  --uncopied-bg: #fff7ed;
+  --uncopied-bg-hover: #ffedd5;
+  --uncopied-border: #fb923c;
+  --uncopied-accent: #c2410c;
+
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --warn-bg: #fff7ed;
+  --warn-text: #9a3412;
+  --warn-border: #fed7aa;
+  --error-bg: #fef2f2;
+  --error-text: #b91c1c;
+  --ok-bg: #ecfdf5;
+  --ok-text: #047857;
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.03);
+  --shadow-lg: 0 20px 48px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-glow: 0 6px 16px -4px rgba(249, 115, 22, 0.40);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0f14;
+    --surface: #161b22;
+    --surface-2: #1c232c;
+    --text: #f5f7fa;
+    --text-muted: #9aa4b2;
+    --text-soft: #6b7585;
+    --border: #232a33;
+    --border-strong: #3a434f;
+
+    --accent: #fb923c;
+    --accent-hover: #fdba74;
+    --accent-text: #0b0f14;
+    --accent-soft: rgba(251, 146, 60, 0.12);
+
+    --uncopied-bg: rgba(251, 146, 60, 0.08);
+    --uncopied-bg-hover: rgba(251, 146, 60, 0.14);
+    --uncopied-border: #fb923c;
+    --uncopied-accent: #fdba74;
+
+    --danger: #f87171;
+    --danger-hover: #ef4444;
+    --warn-bg: rgba(251, 146, 60, 0.12);
+    --warn-text: #fdba74;
+    --warn-border: rgba(251, 146, 60, 0.30);
+    --error-bg: rgba(239, 68, 68, 0.10);
+    --error-text: #fca5a5;
+    --ok-bg: rgba(34, 197, 94, 0.10);
+    --ok-text: #86efac;
+
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.5);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
+    --shadow-lg: 0 20px 48px rgba(0,0,0,0.7);
+    --shadow-glow: 0 6px 16px -4px rgba(251, 146, 60, 0.45);
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  background-image: linear-gradient(180deg, #b4d7ea 0%, #d6e7f1 18%, #eef3f6 42%, #f7f6f2 70%, #faf6ef 100%);
+  background-attachment: fixed;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv11", "ss01", "ss03";
+  padding-bottom: env(safe-area-inset-bottom);
+  letter-spacing: -0.005em;
+  min-height: 100vh;
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    background-image: linear-gradient(180deg, #0f1721 0%, #0c1219 35%, #0b0f14 70%);
+  }
+}
+
+button, input, textarea { font-family: inherit; color: inherit; }
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(220, 233, 243, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: saturate(160%) blur(24px);
+  -webkit-backdrop-filter: saturate(160%) blur(24px);
+  padding-top: env(safe-area-inset-top);
+}
+@media (prefers-color-scheme: dark) {
+  .header { background: rgba(15, 23, 33, 0.6); border-bottom-color: rgba(255,255,255,0.04); }
+}
+.header-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  gap: 12px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.10);
+}
+.title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.025em;
+  color: var(--text);
+}
+.persistence-status {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: help;
+  white-space: nowrap;
+  font-weight: 450;
+}
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.04);
+}
+.dot-ok { background: #22c55e; }
+.dot-warn { background: #eab308; }
+.dot-err { background: #ef4444; }
+
+.main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 20px 96px;
+}
+
+.banners-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  border: 1px solid;
+  line-height: 1.45;
+}
+.banner-warn { background: var(--warn-bg); color: var(--warn-text); border-color: var(--warn-border); }
+.banner-error { background: var(--error-bg); color: var(--error-text); border-color: #fecaca; }
+.banner-info { background: var(--surface); color: var(--text); border-color: var(--border); box-shadow: var(--shadow-xs); }
+.banner-text { flex: 1; }
+.banner-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.banner-dismiss {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 13px;
+  opacity: 0.7;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+.banner-dismiss:hover { opacity: 1; background: rgba(0,0,0,0.04); }
+
+.capture {
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: var(--radius-xl);
+  padding: 18px 18px 14px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-md);
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+.capture:focus-within {
+  box-shadow: var(--shadow-lg);
+}
+@media (prefers-color-scheme: dark) {
+  .capture { border-color: var(--border); }
+}
+#entry-textarea {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  padding: 6px 4px;
+  min-height: 80px;
+  line-height: 1.5;
+  display: block;
+  letter-spacing: -0.005em;
+}
+#entry-textarea::placeholder { color: var(--text-soft); opacity: 1; }
+
+.capture-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+#entry-date, #entry-time {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 14px;
+  outline: none;
+  min-width: 0;
+  color: var(--text);
+  transition: background 0.12s, border-color 0.12s;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+#entry-time { flex: 0.85; }
+#entry-date:hover, #entry-time:hover { background: #eef0f3; }
+#entry-date:focus, #entry-time:focus { background: var(--surface); border-color: var(--border-strong); }
+@media (prefers-color-scheme: dark) {
+  #entry-date:hover, #entry-time:hover { background: #232a33; }
+}
+#entry-add-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: var(--shadow-glow);
+  font-size: 0;
+  flex-shrink: 0;
+  position: relative;
+}
+#entry-add-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><line x1='12' y1='19' x2='12' y2='5'/><polyline points='5 12 12 5 19 12'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px;
+}
+#entry-add-btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+#entry-add-btn:active:not(:disabled) { transform: scale(0.95); }
+@media (prefers-color-scheme: dark) {
+  #entry-add-btn::before {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0f14' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><line x1='12' y1='19' x2='12' y2='5'/><polyline points='5 12 12 5 19 12'/></svg>");
+  }
+}
+
+.chips-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  overflow-x: auto;
+  padding: 2px 0 6px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.chips-row::-webkit-scrollbar { height: 4px; }
+.chips-row::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+.chip {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s, box-shadow 0.12s;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: -0.005em;
+}
+.chip:hover { background: var(--surface-2); border-color: #b8c0ca; }
+.chip:active { transform: scale(0.97); }
+@media (prefers-color-scheme: dark) {
+  .chip:hover { background: var(--surface-2); border-color: var(--border-strong); }
+}
+.chip-edit {
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+}
+.chip-edit:hover { background: var(--surface-2); border-style: dashed; }
+
+.btn {
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, transform 0.05s, opacity 0.12s, box-shadow 0.12s;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: -0.005em;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn:active:not(:disabled) { transform: scale(0.985); }
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: var(--shadow-glow);
+  font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: 0 8px 20px -6px rgba(249, 115, 22, 0.5);
+}
+.btn-secondary {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--surface-2); border-color: #b8c0ca; }
+@media (prefers-color-scheme: dark) {
+  .btn-secondary:hover:not(:disabled) { border-color: var(--border-strong); }
+}
+.btn-tertiary {
+  background: transparent;
+  color: var(--text-muted);
+}
+.btn-tertiary:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+.btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
+.btn-block { width: 100%; }
+.btn-small { padding: 7px 12px; font-size: 13px; }
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.actions-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.actions-row #copy-since-btn { flex: 1; }
+.btn-icon-only {
+  width: 48px;
+  flex-shrink: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+.btn-icon-only:hover:not(:disabled) { color: var(--text); }
+.btn-icon-only svg { display: block; }
+
+.entries-container { display: flex; flex-direction: column; gap: 28px; }
+.day-group { display: flex; flex-direction: column; }
+.day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 10px;
+  margin-bottom: 4px;
+}
+.day-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+.day-meta {
+  font-size: 11px;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  column-gap: 14px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 12px 12px 36px;
+  margin-top: 8px;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.12s, box-shadow 0.12s;
+  position: relative;
+  min-height: 56px;
+}
+.entry:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+.entry.uncopied {
+  background: var(--uncopied-bg);
+  border-color: #fed7aa;
+}
+.entry.uncopied::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 24px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18);
+}
+.entry.uncopied.editing::before { display: none; }
+@media (prefers-color-scheme: dark) {
+  .entry.uncopied { border-color: rgba(251, 146, 60, 0.25); }
+}
+.entry.editing {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  padding: 14px;
+}
+.entry-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-align: right;
+}
+.entry.uncopied .entry-time { color: var(--uncopied-accent); }
+.entry-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+  min-width: 0;
+}
+.entry-actions {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  color: var(--text-soft);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, color 0.12s;
+}
+.btn-icon svg { display: block; }
+.btn-icon:hover { background: rgba(15, 23, 42, 0.06); color: var(--text); }
+@media (prefers-color-scheme: dark) {
+  .btn-icon:hover { background: rgba(255,255,255,0.06); }
+}
+.btn-icon-danger:hover { background: var(--error-bg); color: var(--danger); }
+
+.entry-edit { display: flex; flex-direction: column; gap: 10px; }
+.edit-dt-row { display: flex; gap: 8px; }
+.edit-dt-row .edit-datetime { flex: 1; min-width: 0; }
+.edit-textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 15px;
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical;
+  min-height: 80px;
+  outline: none;
+  font-family: inherit;
+  letter-spacing: -0.005em;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.edit-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.06); }
+.edit-datetime {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.edit-datetime:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.06); }
+.edit-actions { display: flex; gap: 8px; align-items: center; }
+.edit-note {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.btn-delete-square {
+  background: var(--danger);
+  color: white;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s, transform 0.05s, box-shadow 0.12s;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25);
+}
+.btn-delete-square:hover { background: var(--danger-hover); box-shadow: 0 4px 12px -2px rgba(220, 38, 38, 0.4); }
+.btn-delete-square:active { transform: scale(0.96); }
+.btn-delete-square svg { display: block; }
+
+.empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 56px 20px;
+  font-size: 14px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  letter-spacing: -0.005em;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+  animation: fade-in 0.15s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.modal-overlay.hidden { display: none; }
+.modal-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slide-up { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-content h3 { margin: 0 0 10px; font-size: 18px; font-weight: 600; letter-spacing: -0.02em; font-family: var(--font-display); }
+.modal-content p { margin: 0 0 14px; color: var(--text-muted); font-size: 13.5px; line-height: 1.5; }
+.modal-help { font-size: 13px; line-height: 1.5; }
+
+.menu-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 12px; }
+.menu-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  transition: background 0.12s, border-color 0.12s, transform 0.05s;
+  -webkit-tap-highlight-color: transparent;
+}
+.menu-item:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.menu-item:active { transform: scale(0.99); }
+.menu-item-label { font-size: 14.5px; font-weight: 600; letter-spacing: -0.005em; }
+.menu-item-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.4; }
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.modal-actions.stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+.modal-actions.stacked .btn { width: 100%; }
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.form-row > span {
+  width: 56px;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-weight: 500;
+}
+.form-row input[type=date], .form-row input[type=file] {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 15px;
+  outline: none;
+  min-width: 0;
+  color: var(--text);
+  transition: background 0.12s, border-color 0.12s;
+  font-variant-numeric: tabular-nums;
+}
+.form-row input[type=date]:focus { background: var(--surface); border-color: var(--accent); }
+.range-presets {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 12px;
+  flex-wrap: wrap;
+}
+.range-presets .btn { padding: 6px 12px; font-size: 12.5px; }
+.restore-textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  min-height: 140px;
+  margin-bottom: 4px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.12s, background 0.12s;
+}
+.restore-textarea:focus { background: var(--surface); border-color: var(--accent); }
+
+.chips-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 12px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 2px;
+}
+.chip-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 4px 4px 4px 0;
+  transition: box-shadow 0.12s, border-color 0.12s, transform 0.05s;
+}
+.chip-edit-row.dragging {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+  opacity: 0.95;
+  transform: scale(1.01);
+  position: relative;
+  z-index: 5;
+}
+.chip-edit-row input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 14.5px;
+  outline: none;
+  color: var(--text);
+  transition: background 0.12s, border-color 0.12s;
+  min-width: 0;
+}
+.chip-edit-row input:focus { background: var(--surface-2); border-color: var(--border-strong); }
+
+.chip-drag-handle {
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 32px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-soft);
+  cursor: grab;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.12s, background 0.12s;
+}
+.chip-drag-handle:hover { color: var(--text-muted); background: var(--surface-2); }
+.chip-drag-handle:active,
+.chip-edit-row.dragging .chip-drag-handle { cursor: grabbing; color: var(--text); }
+.chip-drag-handle svg { display: block; }
+
+.chip-remove-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-soft);
+  border-radius: var(--radius-sm);
+}
+.chip-remove-btn:hover { background: var(--error-bg); color: var(--danger); }
+.chip-remove-btn svg { display: block; }
+
+.snapshot-list { list-style: none; padding: 0; margin: 0 0 12px; }
+.snapshot-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.snapshot-item:last-child { border-bottom: none; }
+.snapshot-meta { flex: 1; min-width: 0; }
+.snapshot-time { font-weight: 500; font-size: 14px; letter-spacing: -0.005em; }
+.snapshot-count { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+.toasts-container {
+  position: fixed;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 200;
+  pointer-events: none;
+  padding: 0 12px;
+}
+.toast {
+  background: #0a0a0a;
+  color: #fafafa;
+  padding: 11px 18px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 100%;
+  text-align: center;
+  pointer-events: auto;
+}
+.toast.visible { opacity: 1; transform: translateY(0); }
+.toast-error { background: #dc2626; }
+.toast-warn { background: #b45309; }
+.toast-ok { background: #15803d; }
+
+.hidden { display: none !important; }
+
+@media (max-width: 480px) {
+  .main { padding: 16px 14px 96px; }
+  .header-inner { padding: 12px 14px; }
+  .title { font-size: 17px; }
+  .entry { grid-template-columns: 52px 1fr auto; padding: 10px 10px 10px 30px; column-gap: 10px; }
+  .entry.uncopied::before { left: 14px; top: 21px; }
+  .capture { padding: 12px 14px; }
+  .modal-content { padding: 20px; border-radius: var(--radius-lg); }
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <img class="brand-icon" id="brand-icon" src="images/icon.png" alt="" width="32" height="32" decoding="async">
+      <h1 class="title">BAM Tracker</h1>
+    </div>
+    <div class="persistence-status" id="persistence-status"></div>
+  </div>
+</header>
+
+<main class="main">
+
+  <div id="banners" class="banners-container"></div>
+
+  <section class="capture">
+    <textarea id="entry-textarea" rows="3" placeholder="Add new entry" autocapitalize="sentences"></textarea>
+    <div class="capture-row">
+      <input type="date" id="entry-date" aria-label="Date">
+      <input type="time" id="entry-time" aria-label="Time">
+      <button id="entry-add-btn" class="btn btn-primary" aria-label="Add entry"></button>
+    </div>
+    <div id="chips-row" class="chips-row"></div>
+  </section>
+
+  <section class="actions">
+    <div class="actions-row">
+      <button id="copy-since-btn" class="btn btn-primary">Copy since last export</button>
+      <button id="more-btn" class="btn btn-secondary btn-icon-only" aria-label="More actions">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <section id="entries-container" class="entries-container"></section>
+
+</main>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div id="modal-content" class="modal-content"></div>
+</div>
+
+<div id="toasts" class="toasts-container"></div>
+
+<script>
+'use strict';
+
+// ============================================================================
+// App icon (96x96 PNG, base64-embedded so it renders in every context —
+// preview panel, file://, served. Wired to the favicon, the apple-touch-icon,
+// and the brand mark in the header.)
+// ============================================================================
+
+// ============================================================================
+// Constants
+// ============================================================================
+const SCHEMA_VERSION = 1;
+const DB_NAME = 'tracker';
+const DB_VERSION = 1;
+const KV_STORE = 'kv';
+const SNAP_STORE = 'snapshots';
+const DATA_KEY = 'data';
+const LS_DATA_KEY = 'tracker.data.v1';
+const MAX_SNAPSHOTS = 15;
+const SNAPSHOT_MIN_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+const SNAPSHOT_LOAD_AGE_MS = 60 * 60 * 1000;     // 1 hour
+const UNCOPIED_BANNER_THRESHOLD = 30; // uncopied entries before the "back up" nag shows
+const DEFAULT_CHIPS = ['Chole', 'Psyllium', 'Coffee'];
+
+// ============================================================================
+// Time / format helpers
+// ============================================================================
+const pad2 = (n) => String(n).padStart(2, '0');
+
+function generateId() {
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+}
+
+function nowISO() { return new Date().toISOString(); }
+
+function toDateInput(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function toTimeInput(iso) {
+  const d = new Date(iso);
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function fromDateAndTime(dateStr, timeStr) {
+  // dateStr: YYYY-MM-DD, timeStr: HH:MM — both local
+  if (!dateStr || !timeStr) return null;
+  const d = new Date(`${dateStr}T${timeStr}`);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+function formatExportTimestamp(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function formatTimeOfDay(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+function localDateKey(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function formatDayHeader(dateKey) {
+  const [y, m, dd] = dateKey.split('-').map(Number);
+  const date = new Date(y, m - 1, dd);
+  const today = new Date();
+  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+  const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+  if (sameDay(date, today)) return 'Today';
+  if (sameDay(date, yesterday)) return 'Yesterday';
+
+  const opts = { weekday: 'long', month: 'long', day: 'numeric' };
+  if (date.getFullYear() !== today.getFullYear()) opts.year = 'numeric';
+  return date.toLocaleDateString(undefined, opts);
+}
+
+function backupFilename() {
+  const d = new Date();
+  return `tracker-backup-${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}${pad2(d.getMinutes())}.json`;
+}
+
+// ============================================================================
+// IndexedDB layer (thin promise wrappers)
+// ============================================================================
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) {
+      reject(new Error('IndexedDB not available'));
+      return;
+    }
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(KV_STORE)) d.createObjectStore(KV_STORE, { keyPath: 'key' });
+      if (!d.objectStoreNames.contains(SNAP_STORE)) d.createObjectStore(SNAP_STORE, { keyPath: 'timestamp' });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
+    req.onblocked = () => reject(new Error('IndexedDB blocked'));
+  });
+}
+
+function requireDB() {
+  if (!db) throw new Error('IndexedDB unavailable');
+}
+
+function idbGet(store, key) {
+  return new Promise((resolve, reject) => {
+    requireDB();
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbPut(store, value) {
+  return new Promise((resolve, reject) => {
+    requireDB();
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(value);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    requireDB();
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbDelete(store, key) {
+  return new Promise((resolve, reject) => {
+    requireDB();
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(key);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ============================================================================
+// Data validation + migration
+// ============================================================================
+function isValidEntry(e) {
+  return e && typeof e === 'object'
+    && typeof e.id === 'string' && e.id.length > 0
+    && typeof e.text === 'string'
+    && typeof e.timestamp === 'string' && !isNaN(new Date(e.timestamp).getTime())
+    && typeof e.exported === 'boolean';
+}
+
+function isValidData(d) {
+  if (!d || typeof d !== 'object') return false;
+  if (typeof d.schemaVersion !== 'number') return false;
+  if (!Array.isArray(d.entries)) return false;
+  if (!Array.isArray(d.chips)) return false;
+  if (!d.meta || typeof d.meta !== 'object') return false;
+  if (!d.entries.every(isValidEntry)) return false;
+  if (!d.chips.every((c) => typeof c === 'string')) return false;
+  return true;
+}
+
+function newEmptyData() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    entries: [],
+    chips: [...DEFAULT_CHIPS],
+    meta: { lastBackupAt: null, entryCountAtLastBackup: 0 },
+  };
+}
+
+// Demo entries, only seeded when the list is empty on first load — gives a
+// new user something to visualize instead of an empty state. Entries are
+// real and editable/deletable like any others.
+function seedDummyData(data) {
+  const nowMs = Date.now();
+  const atOffset = (hours) => new Date(nowMs - hours * 60 * 60 * 1000).toISOString();
+  const seeds = [
+    { offset: 0.4,  text: "Stomach feels a little crampy",                            exported: false },
+    { offset: 1.2,  text: "Coffee, half a cup",                                       exported: false },
+    { offset: 3.5,  text: "Lunch: chicken bowl with rice and greens",                 exported: false },
+    { offset: 5.0,  text: "Psyllium with water",                                      exported: true  },
+    { offset: 5.2,  text: "Chole",                                                    exported: true  },
+    { offset: 22.0, text: "Felt good through the afternoon. No urgency.",             exported: true  },
+    { offset: 25.5, text: "Dinner: pasta with olive oil, simple side salad",          exported: true  },
+    { offset: 29.0, text: "Chole + Psyllium together before bed",                     exported: true  },
+    { offset: 30.5, text: "Coffee",                                                   exported: true  },
+    { offset: 49.0, text: "Mild headache, drank water and it passed",                 exported: true  },
+    { offset: 53.0, text: "Psyllium",                                                 exported: true  },
+    { offset: 54.5, text: "Chole",                                                    exported: true  },
+  ];
+  for (let i = 0; i < seeds.length; i++) {
+    const s = seeds[i];
+    const ts = atOffset(s.offset);
+    data.entries.push({
+      id: 'seed-' + i + '-' + Math.random().toString(36).slice(2, 6),
+      text: s.text,
+      timestamp: ts,
+      exported: s.exported,
+      createdAt: ts,
+      updatedAt: ts,
+    });
+  }
+}
+
+// Non-destructive migration. Future migrations should:
+//   1) read the old shape,
+//   2) write into a NEW versioned key,
+//   3) leave the old key in place for a while as a fallback.
+function migrate(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  // Defensive parse: build a clean object, never trust shape.
+  const data = {
+    schemaVersion: typeof raw.schemaVersion === 'number' ? raw.schemaVersion : 1,
+    entries: Array.isArray(raw.entries) ? raw.entries.filter(isValidEntry) : [],
+    chips: Array.isArray(raw.chips) ? raw.chips.filter((c) => typeof c === 'string') : [...DEFAULT_CHIPS],
+    meta: (raw.meta && typeof raw.meta === 'object') ? {
+      lastBackupAt: typeof raw.meta.lastBackupAt === 'string' ? raw.meta.lastBackupAt : null,
+      entryCountAtLastBackup: typeof raw.meta.entryCountAtLastBackup === 'number' ? raw.meta.entryCountAtLastBackup : 0,
+    } : { lastBackupAt: null, entryCountAtLastBackup: 0 },
+  };
+  // Future: if (data.schemaVersion < 2) { ...transform... ; data.schemaVersion = 2; }
+  if (data.schemaVersion < SCHEMA_VERSION) data.schemaVersion = SCHEMA_VERSION;
+  return data;
+}
+
+// ============================================================================
+// Reconciliation between IDB (primary) and localStorage (secondary)
+// ============================================================================
+function reconcile(primary, secondary) {
+  if (!primary && !secondary) return { data: null, source: 'none', note: null };
+  if (primary && !secondary) return { data: primary, source: 'idb-only', note: null };
+  if (!primary && secondary) {
+    return { data: secondary, source: 'ls-only', note: 'IndexedDB was empty — restored from localStorage backup copy. Re-syncing.' };
+  }
+
+  const p = primary.entries.length;
+  const s = secondary.entries.length;
+  if (p > s) return { data: primary, source: 'idb', note: null };
+  if (s > p) return { data: secondary, source: 'ls', note: `localStorage had ${s} entries vs IndexedDB's ${p}. Using localStorage.` };
+
+  const latest = (entries) => Math.max(0, ...entries.map((e) => new Date(e.updatedAt || e.timestamp).getTime()));
+  const pLatest = latest(primary.entries);
+  const sLatest = latest(secondary.entries);
+  if (pLatest >= sLatest) return { data: primary, source: 'idb', note: null };
+  return { data: secondary, source: 'ls', note: 'localStorage was more recent than IndexedDB. Using localStorage and re-syncing.' };
+}
+
+// ============================================================================
+// In-memory state
+// ============================================================================
+const state = {
+  data: null,
+  editingId: null,
+  deletingId: null,
+  storagePersistent: null,
+  lastSnapshotTime: 0,
+  previewMode: false, // true when storage is unavailable (e.g. data: URL preview)
+};
+
+// Detect contexts where the browser blocks storage entirely.
+// data:/blob: URLs (preview panels) and some sandboxed iframes throw on any
+// storage access, so probe localStorage to confirm.
+function detectStorageAvailability() {
+  const ephemeral = location.protocol === 'data:' || location.protocol === 'blob:';
+  let lsOk = false;
+  try {
+    const k = '__tracker_probe__';
+    localStorage.setItem(k, '1');
+    localStorage.removeItem(k);
+    lsOk = true;
+  } catch (_) { /* blocked */ }
+  let idbOk = 'indexedDB' in window;
+  // openDB() will confirm idb actually works; this is the cheap pre-check
+  return { ephemeral, lsOk, idbOk };
+}
+
+// ============================================================================
+// Save flow — validate, then commit. Bad writes never overwrite good data.
+// ============================================================================
+let lastGoodSerialized = null;
+
+async function save({ snapshot = true } = {}) {
+  if (!state.data) return false;
+
+  let serialized;
+  try {
+    serialized = JSON.stringify(state.data);
+  } catch (e) {
+    notify('Save aborted: data could not be serialized.', 'error');
+    return false;
+  }
+
+  let reparsed;
+  try {
+    reparsed = JSON.parse(serialized);
+  } catch (e) {
+    notify('Save aborted: re-parse failed. Previous good copy preserved.', 'error');
+    return false;
+  }
+
+  if (!isValidData(reparsed)) {
+    notify('Save aborted: data failed validation. Previous good copy preserved.', 'error');
+    return false;
+  }
+
+  let idbOk = false;
+  if (db) {
+    try {
+      await idbPut(KV_STORE, { key: DATA_KEY, value: reparsed });
+      idbOk = true;
+    } catch (e) {
+      console.error('IDB write failed', e);
+      notify("Couldn't save to primary storage. Trying backup copy instead.", 'warn');
+    }
+  }
+
+  let lsOk = false;
+  if (!state.previewMode) {
+    try {
+      localStorage.setItem(LS_DATA_KEY, serialized);
+      lsOk = true;
+    } catch (e) {
+      console.error('LS write failed', e);
+      if (e && e.name === 'QuotaExceededError') {
+        notify("You're out of storage space. Back up and consider trimming older entries.", 'error');
+      } else {
+        notify("Couldn't save to backup storage.", 'warn');
+      }
+    }
+  }
+
+  if (!idbOk && !lsOk) {
+    if (state.previewMode) {
+      // Storage is intentionally unavailable in preview contexts (data: URL,
+      // sandboxed iframe, etc.). The in-memory change is still valid for this
+      // session — pretend the write succeeded so callers don't roll back the
+      // change the user just made and leave the UI looking frozen.
+      lastGoodSerialized = serialized;
+      return true;
+    }
+    notify("Couldn't save anywhere. Your latest change wasn't saved. Back up now from another device.", 'error');
+    return false;
+  }
+
+  lastGoodSerialized = serialized;
+
+  if (snapshot) maybeSnapshot(reparsed);
+
+  return true;
+}
+
+// ============================================================================
+// Snapshots (rolling, in IndexedDB)
+// ============================================================================
+async function takeSnapshot(data) {
+  if (!db) return;
+  const snap = { timestamp: nowISO(), data };
+  try {
+    await idbPut(SNAP_STORE, snap);
+    state.lastSnapshotTime = Date.now();
+    const all = await idbGetAll(SNAP_STORE);
+    all.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    for (let i = MAX_SNAPSHOTS; i < all.length; i++) {
+      await idbDelete(SNAP_STORE, all[i].timestamp);
+    }
+  } catch (e) {
+    console.error('Snapshot failed', e);
+  }
+}
+
+async function maybeSnapshot(data) {
+  const now = Date.now();
+  if (now - state.lastSnapshotTime < SNAPSHOT_MIN_INTERVAL_MS) return;
+  await takeSnapshot(data);
+}
+
+async function ensureInitialSnapshot(data) {
+  if (!db || !data || data.entries.length === 0) return;
+  try {
+    const all = await idbGetAll(SNAP_STORE);
+    if (all.length === 0) {
+      await takeSnapshot(data);
+      return;
+    }
+    all.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    const latest = new Date(all[0].timestamp).getTime();
+    state.lastSnapshotTime = latest;
+    if (Date.now() - latest > SNAPSHOT_LOAD_AGE_MS) {
+      await takeSnapshot(data);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// ============================================================================
+// Load + recovery chain
+// ============================================================================
+async function loadData() {
+  let primary = null, secondary = null;
+  let primaryRawExisted = false, secondaryRawExisted = false;
+
+  if (db) {
+    try {
+      const rec = await idbGet(KV_STORE, DATA_KEY);
+      if (rec && rec.value) {
+        primaryRawExisted = true;
+        const migrated = migrate(rec.value);
+        if (isValidData(migrated)) primary = migrated;
+        else showBanner("Your saved data looked corrupted. Trying the backup copy instead.", 'warn');
+      }
+    } catch (_) { /* upfront storage check already informed the user */ }
+  }
+
+  try {
+    const raw = localStorage.getItem(LS_DATA_KEY);
+    if (raw) {
+      secondaryRawExisted = true;
+      const parsed = JSON.parse(raw);
+      const migrated = migrate(parsed);
+      if (isValidData(migrated)) secondary = migrated;
+      else showBanner("Your backup copy looked corrupted. Trying older snapshots.", 'warn');
+    }
+  } catch (_) { /* upfront storage check already informed the user */ }
+
+  const reconciled = reconcile(primary, secondary);
+  if (reconciled.note) showBanner(reconciled.note, 'info');
+  if (reconciled.data) return { data: reconciled.data, source: reconciled.source };
+
+  // Both stores empty / unreadable — try snapshots
+  if (db) {
+    try {
+      const snaps = await idbGetAll(SNAP_STORE);
+      if (snaps.length > 0) {
+        snaps.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+        for (const s of snaps) {
+          const m = migrate(s.data);
+          if (isValidData(m)) {
+            showBanner(`Recovered from snapshot taken ${new Date(s.timestamp).toLocaleString()}. Verify your data and back up.`, 'warn');
+            return { data: m, source: 'snapshot' };
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  if (primaryRawExisted || secondaryRawExisted) {
+    showBanner('Stored data was corrupt and unrecoverable. Use Restore to load a backup file before adding anything.', 'error');
+  }
+  return { data: newEmptyData(), source: 'empty' };
+}
+
+// ============================================================================
+// UI: rendering
+// ============================================================================
+function render() {
+  renderChips();
+  renderActions();
+  renderEntries();
+  renderBackupBanner();
+}
+
+function renderChips() {
+  const row = document.getElementById('chips-row');
+  row.innerHTML = '';
+  for (const chip of state.data.chips) {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.type = 'button';
+    btn.textContent = chip;
+    btn.addEventListener('click', () => injectChip(chip));
+    row.appendChild(btn);
+  }
+  const edit = document.createElement('button');
+  edit.className = 'chip chip-edit';
+  edit.type = 'button';
+  edit.textContent = 'Edit chips';
+  edit.addEventListener('click', openChipsEditor);
+  row.appendChild(edit);
+}
+
+function renderActions() {
+  const uncopied = state.data.entries.filter((e) => !e.exported).length;
+  const btn = document.getElementById('copy-since-btn');
+  btn.textContent = `Copy since last export (${uncopied})`;
+  btn.disabled = uncopied === 0;
+}
+
+function renderEntries() {
+  const container = document.getElementById('entries-container');
+  container.innerHTML = '';
+
+  if (state.data.entries.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'No entries yet. Add one above.';
+    container.appendChild(empty);
+    return;
+  }
+
+  const sorted = [...state.data.entries].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  const groups = new Map();
+  for (const e of sorted) {
+    const key = localDateKey(e.timestamp);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(e);
+  }
+
+  for (const [key, entries] of groups) {
+    const groupEl = document.createElement('section');
+    groupEl.className = 'day-group';
+
+    const header = document.createElement('div');
+    header.className = 'day-header';
+    const title = document.createElement('span');
+    title.className = 'day-title';
+    title.textContent = formatDayHeader(key);
+    const meta = document.createElement('span');
+    meta.className = 'day-meta';
+    const uncopiedCount = entries.filter((e) => !e.exported).length;
+    meta.textContent = `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}` + (uncopiedCount ? ` · ${uncopiedCount} new` : '');
+    header.appendChild(title);
+    header.appendChild(meta);
+    groupEl.appendChild(header);
+
+    for (const e of entries) groupEl.appendChild(renderEntry(e));
+    container.appendChild(groupEl);
+  }
+}
+
+function renderEntry(entry) {
+  const el = document.createElement('div');
+  el.className = 'entry' + (entry.exported ? '' : ' uncopied');
+
+  if (state.editingId === entry.id) {
+    el.classList.add('editing');
+    const wrap = document.createElement('div');
+    wrap.className = 'entry-edit';
+
+    const ta = document.createElement('textarea');
+    ta.className = 'edit-textarea';
+    ta.value = entry.text;
+    ta.rows = 3;
+
+    const dtRow = document.createElement('div');
+    dtRow.className = 'edit-dt-row';
+    const dateEl = document.createElement('input');
+    dateEl.type = 'date';
+    dateEl.className = 'edit-datetime';
+    dateEl.value = toDateInput(entry.timestamp);
+    const timeEl = document.createElement('input');
+    timeEl.type = 'time';
+    timeEl.className = 'edit-datetime';
+    timeEl.value = toTimeInput(entry.timestamp);
+    dtRow.appendChild(dateEl);
+    dtRow.appendChild(timeEl);
+
+    const note = document.createElement('div');
+    note.className = 'edit-note';
+    note.textContent = 'Saving will re-mark this as not-yet-exported so it goes into the next batch.';
+
+    const actions = document.createElement('div');
+    actions.className = 'edit-actions';
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-primary';
+    saveBtn.textContent = 'Save';
+    saveBtn.addEventListener('click', () => saveEntryEdit(entry.id, ta.value, dateEl.value, timeEl.value));
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-secondary';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', cancelEntryEdit);
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn btn-delete-square';
+    deleteBtn.type = 'button';
+    deleteBtn.setAttribute('aria-label', 'Delete entry');
+    deleteBtn.title = 'Delete';
+    deleteBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+    deleteBtn.addEventListener('click', () => confirmDeleteEntry(entry.id));
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+    const spacer = document.createElement('div');
+    spacer.style.flex = '1';
+    actions.appendChild(spacer);
+    actions.appendChild(deleteBtn);
+
+    wrap.appendChild(ta);
+    wrap.appendChild(dtRow);
+    wrap.appendChild(note);
+    wrap.appendChild(actions);
+    el.appendChild(wrap);
+
+    setTimeout(() => {
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+    }, 0);
+    return el;
+  }
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'entry-time';
+  timeEl.textContent = formatTimeOfDay(entry.timestamp);
+
+  const textEl = document.createElement('div');
+  textEl.className = 'entry-text';
+  textEl.textContent = entry.text;
+
+  const actions = document.createElement('div');
+  actions.className = 'entry-actions';
+  const editBtn = document.createElement('button');
+  editBtn.className = 'btn-icon';
+  editBtn.setAttribute('aria-label', 'Edit entry');
+  editBtn.title = 'Edit';
+  editBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
+  editBtn.addEventListener('click', () => startEntryEdit(entry.id));
+  actions.appendChild(editBtn);
+
+  el.appendChild(timeEl);
+  el.appendChild(textEl);
+  el.appendChild(actions);
+  return el;
+}
+
+function renderBackupBanner() {
+  let existing = document.getElementById('backup-banner');
+  if (existing) existing.remove();
+
+  const uncopied = state.data.entries.filter((e) => !e.exported).length;
+  if (uncopied < UNCOPIED_BANNER_THRESHOLD) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'backup-banner';
+  banner.className = 'banner banner-warn';
+  banner.innerHTML = `
+    <span class="banner-text"></span>
+    <span class="banner-actions">
+      <button class="btn btn-small btn-primary">Back up</button>
+      <button class="banner-dismiss">Later</button>
+    </span>
+  `;
+  banner.querySelector('.banner-text').textContent =
+    `${uncopied} uncopied ${uncopied === 1 ? 'entry' : 'entries'} — back up now?`;
+  // "Back up" on this banner == copy since last export (the user's effective
+  // backup is sending uncopied entries downstream to their AI).
+  banner.querySelector('.btn-primary').addEventListener('click', () => {
+    banner.remove();
+    copySinceLastExport();
+  });
+  banner.querySelector('.banner-dismiss').addEventListener('click', () => banner.remove());
+
+  const container = document.getElementById('banners');
+  container.appendChild(banner);
+}
+
+// ============================================================================
+// Capture / Add
+// ============================================================================
+async function addEntry() {
+  const ta = document.getElementById('entry-textarea');
+  const dateEl = document.getElementById('entry-date');
+  const timeEl = document.getElementById('entry-time');
+
+  const text = ta.value.trim();
+  if (!text) { ta.focus(); return; }
+
+  const tsIso = fromDateAndTime(dateEl.value, timeEl.value) || nowISO();
+  if (!tsIso) { notify('Invalid date/time.', 'warn'); return; }
+
+  const now = nowISO();
+  const entry = { id: generateId(), text, timestamp: tsIso, exported: false, createdAt: now, updatedAt: now };
+
+  state.data.entries.push(entry);
+  const ok = await save();
+  if (!ok) {
+    state.data.entries.pop();
+    return;
+  }
+
+  ta.value = '';
+  ta.style.height = '';
+  const cur = nowISO();
+  dateEl.value = toDateInput(cur);
+  timeEl.value = toTimeInput(cur);
+  render();
+  ta.focus();
+}
+
+// ============================================================================
+// Edit / Delete
+// ============================================================================
+function startEntryEdit(id) {
+  state.editingId = id;
+  render();
+}
+
+function cancelEntryEdit() {
+  state.editingId = null;
+  render();
+}
+
+async function saveEntryEdit(id, newText, newDate, newTime) {
+  const entry = state.data.entries.find((e) => e.id === id);
+  if (!entry) return;
+
+  const trimmed = newText.trim();
+  if (!trimmed) { notify('Entry text cannot be empty.', 'warn'); return; }
+
+  const newTs = (newDate && newTime) ? fromDateAndTime(newDate, newTime) : entry.timestamp;
+  if (!newTs) { notify('Invalid date/time.', 'warn'); return; }
+
+  const prev = {
+    text: entry.text,
+    timestamp: entry.timestamp,
+    exported: entry.exported,
+    updatedAt: entry.updatedAt,
+    wasEditedAfterExport: entry.wasEditedAfterExport,
+  };
+  const wasExported = entry.exported === true;
+  entry.text = trimmed;
+  entry.timestamp = newTs;
+  entry.exported = false;
+  entry.updatedAt = nowISO();
+  // If this entry was already exported, flag it as a revision so the next
+  // copy-since-last-export includes an explicit instruction to the downstream
+  // AI to replace the prior version. lastExportedTimestamp (set during the
+  // earlier export) is intentionally left unchanged — it's the key the AI uses
+  // to find the prior entry when the user has also moved the timestamp.
+  if (wasExported || entry.wasEditedAfterExport) entry.wasEditedAfterExport = true;
+
+  const ok = await save();
+  if (!ok) {
+    Object.assign(entry, prev);
+    return;
+  }
+
+  state.editingId = null;
+  render();
+}
+
+function confirmDeleteEntry(id) {
+  state.deletingId = id;
+  const entry = state.data.entries.find((e) => e.id === id);
+  if (!entry) return;
+  const preview = entry.text.length > 80 ? entry.text.slice(0, 80) + '…' : entry.text;
+  openModal(`
+    <h3>Delete this entry?</h3>
+    <p class="modal-help">This cannot be undone. A snapshot is taken automatically so recent deletes can be rolled back from Snapshots.</p>
+    <div style="background: var(--surface-2); border-radius: 8px; padding: 10px; font-size: 14px; margin-bottom: 8px;"><strong style="display:block; font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">${formatExportTimestamp(entry.timestamp)}</strong><span></span></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="cancel-delete-btn">Cancel</button>
+      <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+    </div>
+  `);
+  document.querySelector('#modal-content div span').textContent = preview;
+  document.getElementById('confirm-delete-btn').addEventListener('click', deleteEntry);
+  document.getElementById('cancel-delete-btn').addEventListener('click', closeModal);
+}
+
+async function deleteEntry() {
+  const id = state.deletingId;
+  if (!id) return;
+  const idx = state.data.entries.findIndex((e) => e.id === id);
+  if (idx < 0) { closeModal(); return; }
+
+  // Take a snapshot before destructive change
+  await takeSnapshot(JSON.parse(JSON.stringify(state.data)));
+
+  const removed = state.data.entries.splice(idx, 1)[0];
+  const ok = await save({ snapshot: false });
+  if (!ok) {
+    state.data.entries.splice(idx, 0, removed);
+    return;
+  }
+  state.deletingId = null;
+  closeModal();
+  render();
+  notify('Entry deleted.');
+}
+
+// ============================================================================
+// Chips
+// ============================================================================
+function injectChip(chipText) {
+  const ta = document.getElementById('entry-textarea');
+  const current = ta.value;
+  let prefix = '';
+  if (current && !/\s$/.test(current)) prefix = ' ';
+  ta.value = current + prefix + chipText + ' ';
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  autoResize(ta);
+}
+
+function openChipsEditor() {
+  let chips = [...state.data.chips];
+  openModal(`
+    <h3>Edit quick-add chips</h3>
+    <p class="modal-help">Drag the grip to reorder. Tapping a chip in the main view injects its text into the entry field — it does not submit.</p>
+    <div class="chips-editor" id="chips-editor"></div>
+    <button class="btn btn-secondary" id="add-chip-btn">Add chip</button>
+    <div class="modal-actions">
+      <button class="btn btn-tertiary" id="cancel-chips-btn">Cancel</button>
+      <button class="btn btn-primary" id="save-chips-btn">Done</button>
+    </div>
+  `);
+
+  // Sync `chips` from the live DOM order — input values are the source of truth
+  // while the modal is open (the user may be typing into a row right now).
+  function syncFromDOM() {
+    const editor = document.getElementById('chips-editor');
+    const rows = editor.querySelectorAll('.chip-edit-row');
+    chips = Array.from(rows).map((r) => r.querySelector('input').value);
+  }
+
+  function renderEditor() {
+    const editor = document.getElementById('chips-editor');
+    editor.innerHTML = '';
+    chips.forEach((chip) => editor.appendChild(buildRow(chip)));
+    if (chips.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'color: var(--text-muted); font-size: 13px; padding: 8px 4px;';
+      empty.textContent = 'No chips yet. Add one below.';
+      editor.appendChild(empty);
+    }
+  }
+
+  function buildRow(text) {
+    const row = document.createElement('div');
+    row.className = 'chip-edit-row';
+
+    const handle = document.createElement('button');
+    handle.type = 'button';
+    handle.className = 'chip-drag-handle';
+    handle.setAttribute('aria-label', 'Drag to reorder');
+    handle.title = 'Drag to reorder';
+    handle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>';
+    attachDrag(handle, row);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = text;
+    input.placeholder = 'chip name';
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-tertiary chip-remove-btn';
+    remove.setAttribute('aria-label', 'Remove chip');
+    remove.title = 'Remove';
+    remove.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    remove.addEventListener('click', () => {
+      syncFromDOM();
+      const idx = Array.from(document.getElementById('chips-editor').children).indexOf(row);
+      if (idx >= 0) chips.splice(idx, 1);
+      renderEditor();
+    });
+
+    row.appendChild(handle);
+    row.appendChild(input);
+    row.appendChild(remove);
+    return row;
+  }
+
+  // Pointer-based drag-to-reorder. Works on mouse, touch, and pen.
+  function attachDrag(handle, row) {
+    handle.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault();
+      const editor = document.getElementById('chips-editor');
+      handle.setPointerCapture(e.pointerId);
+      row.classList.add('dragging');
+      document.body.style.userSelect = 'none';
+
+      const onMove = (ev) => {
+        const y = ev.clientY;
+        const rows = Array.from(editor.querySelectorAll('.chip-edit-row'));
+        for (const sib of rows) {
+          if (sib === row) continue;
+          const rect = sib.getBoundingClientRect();
+          const mid = rect.top + rect.height / 2;
+          const rowRect = row.getBoundingClientRect();
+          if (y < mid && rowRect.top > rect.top) {
+            editor.insertBefore(row, sib);
+            return;
+          }
+          if (y >= mid && rowRect.top < rect.top) {
+            editor.insertBefore(row, sib.nextSibling);
+            return;
+          }
+        }
+      };
+
+      const onEnd = () => {
+        row.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
+        handle.removeEventListener('pointermove', onMove);
+        handle.removeEventListener('pointerup', onEnd);
+        handle.removeEventListener('pointercancel', onEnd);
+        syncFromDOM();
+      };
+
+      handle.addEventListener('pointermove', onMove);
+      handle.addEventListener('pointerup', onEnd);
+      handle.addEventListener('pointercancel', onEnd);
+    });
+  }
+
+  renderEditor();
+
+  document.getElementById('add-chip-btn').addEventListener('click', () => {
+    syncFromDOM();
+    chips.push('');
+    renderEditor();
+    const editor = document.getElementById('chips-editor');
+    const inputs = editor.querySelectorAll('input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+  document.getElementById('cancel-chips-btn').addEventListener('click', closeModal);
+  document.getElementById('save-chips-btn').addEventListener('click', async () => {
+    syncFromDOM();
+    const clean = chips.map((c) => c.trim()).filter((c) => c.length > 0);
+    const prev = state.data.chips;
+    state.data.chips = clean;
+    const ok = await save();
+    if (!ok) { state.data.chips = prev; return; }
+    closeModal();
+    render();
+  });
+}
+
+// ============================================================================
+// Copy / Export
+// ============================================================================
+function buildExportText(entries) {
+  // Oldest first for chronological reading; one entry per line with [YYYY-MM-DD HH:MM] prefix.
+  // Newlines inside an entry are preserved — parsers can split on /^\[\d{4}/m.
+  const sorted = [...entries].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const hasRevisions = sorted.some((e) => e.wasEditedAfterExport);
+
+  const lines = sorted.map((e) => {
+    const ts = formatExportTimestamp(e.timestamp);
+    if (!e.wasEditedAfterExport) return `[${ts}] ${e.text}`;
+    const tsChanged = e.lastExportedTimestamp && e.lastExportedTimestamp !== e.timestamp;
+    const note = tsChanged
+      ? `{REVISION — replaces the previously exported entry at [${formatExportTimestamp(e.lastExportedTimestamp)}]}`
+      : `{REVISION — replaces any previously exported entry at this same timestamp}`;
+    return `[${ts}] ${note} ${e.text}`;
+  });
+
+  if (hasRevisions) {
+    return [
+      '# INSTRUCTIONS FOR THE READING ASSISTANT',
+      '# Lines marked {REVISION ...} are corrected versions of entries you have already',
+      '# received in a previous export. For each {REVISION} line, locate the prior entry',
+      '# it identifies (by the timestamp inside the note, or by the line\'s own timestamp',
+      '# if no prior timestamp is given) and OVERWRITE that prior entry with this version.',
+      '# Do not keep both copies; the {REVISION} line is the source of truth.',
+      '',
+      ...lines,
+    ].join('\n');
+  }
+  return lines.join('\n');
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      ta.style.pointerEvents = 'none';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e2) {
+      return false;
+    }
+  }
+}
+
+async function copySinceLastExport() {
+  const uncopied = state.data.entries.filter((e) => !e.exported);
+  if (uncopied.length === 0) { notify('Nothing new to copy.'); return; }
+
+  const text = buildExportText(uncopied);
+  const ok = await copyText(text);
+  if (!ok) { notify('Copy to clipboard failed.', 'error'); return; }
+
+  const backup = uncopied.map((e) => ({
+    id: e.id,
+    exported: e.exported,
+    updatedAt: e.updatedAt,
+    wasEditedAfterExport: e.wasEditedAfterExport,
+    lastExportedTimestamp: e.lastExportedTimestamp,
+  }));
+  const now = nowISO();
+  for (const e of state.data.entries) {
+    if (!e.exported) {
+      e.exported = true;
+      e.updatedAt = now;
+      // The revision has now been delivered downstream. Reset the flag and
+      // record this timestamp as the one the AI now knows about, so a future
+      // edit can correctly reference "the entry previously exported at X".
+      e.wasEditedAfterExport = false;
+      e.lastExportedTimestamp = e.timestamp;
+    }
+  }
+  const saved = await save();
+  if (!saved) {
+    for (const b of backup) {
+      const e = state.data.entries.find((x) => x.id === b.id);
+      if (e) {
+        e.exported = b.exported;
+        e.updatedAt = b.updatedAt;
+        e.wasEditedAfterExport = b.wasEditedAfterExport;
+        e.lastExportedTimestamp = b.lastExportedTimestamp;
+      }
+    }
+    return;
+  }
+  notify(`Copied ${uncopied.length} ${uncopied.length === 1 ? 'entry' : 'entries'} and marked as exported.`, 'ok');
+  render();
+}
+
+async function copyAll() {
+  if (state.data.entries.length === 0) { notify('No entries to copy.'); return; }
+  const text = buildExportText(state.data.entries);
+  const ok = await copyText(text);
+  if (ok) notify(`Copied ${state.data.entries.length} entries (flags unchanged).`, 'ok');
+  else notify('Copy to clipboard failed.', 'error');
+}
+
+function openCopyRange() {
+  const t = new Date();
+  const fmt = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  openModal(`
+    <h3>Copy custom range</h3>
+    <label class="form-row"><span>From</span><input type="date" id="range-start" value="${fmt(t)}"></label>
+    <label class="form-row"><span>To</span><input type="date" id="range-end" value="${fmt(t)}"></label>
+    <div class="range-presets">
+      <button type="button" class="btn btn-tertiary" data-preset="today">Today</button>
+      <button type="button" class="btn btn-tertiary" data-preset="yesterday">Yesterday</button>
+      <button type="button" class="btn btn-tertiary" data-preset="7d">Last 7 days</button>
+      <button type="button" class="btn btn-tertiary" data-preset="30d">Last 30 days</button>
+    </div>
+    <p class="modal-help">Inclusive range by calendar day (local time). Flags are not changed.</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="range-cancel-btn">Cancel</button>
+      <button class="btn btn-primary" id="range-copy-btn">Copy</button>
+    </div>
+  `);
+  const startEl = document.getElementById('range-start');
+  const endEl = document.getElementById('range-end');
+
+  document.querySelectorAll('[data-preset]').forEach((b) => {
+    b.addEventListener('click', () => {
+      const t2 = new Date();
+      if (b.dataset.preset === 'today') { startEl.value = endEl.value = fmt(t2); }
+      else if (b.dataset.preset === 'yesterday') { const y = new Date(t2); y.setDate(y.getDate() - 1); startEl.value = endEl.value = fmt(y); }
+      else if (b.dataset.preset === '7d') { const s = new Date(t2); s.setDate(s.getDate() - 6); startEl.value = fmt(s); endEl.value = fmt(t2); }
+      else if (b.dataset.preset === '30d') { const s = new Date(t2); s.setDate(s.getDate() - 29); startEl.value = fmt(s); endEl.value = fmt(t2); }
+    });
+  });
+
+  document.getElementById('range-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('range-copy-btn').addEventListener('click', async () => {
+    const sv = startEl.value, ev = endEl.value;
+    if (!sv || !ev) { notify('Pick both start and end dates.', 'warn'); return; }
+    const startMs = new Date(sv + 'T00:00:00').getTime();
+    const endMs = new Date(ev + 'T23:59:59.999').getTime();
+    if (startMs > endMs) { notify('Start must be on or before end.', 'warn'); return; }
+
+    const inRange = state.data.entries.filter((e) => {
+      const ms = new Date(e.timestamp).getTime();
+      return ms >= startMs && ms <= endMs;
+    });
+    if (inRange.length === 0) { notify('No entries in that range.'); return; }
+    const text = buildExportText(inRange);
+    const ok = await copyText(text);
+    if (ok) { notify(`Copied ${inRange.length} ${inRange.length === 1 ? 'entry' : 'entries'} (flags unchanged).`, 'ok'); closeModal(); }
+    else notify('Copy to clipboard failed.', 'error');
+  });
+}
+
+// ============================================================================
+// Backup / Restore
+// ============================================================================
+function downloadFile(filename, content, mime = 'application/json') {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function backupToFile() {
+  if (state.data.entries.length === 0) { notify('Nothing to back up yet.'); return; }
+  const content = JSON.stringify(state.data, null, 2);
+  downloadFile(backupFilename(), content);
+  state.data.meta.lastBackupAt = nowISO();
+  state.data.meta.entryCountAtLastBackup = state.data.entries.length;
+  await save();
+  notify('Backup file downloaded.', 'ok');
+  render();
+}
+
+async function backupToClipboard() {
+  if (state.data.entries.length === 0) { notify('Nothing to back up yet.'); return; }
+  const content = JSON.stringify(state.data, null, 2);
+  const ok = await copyText(content);
+  if (!ok) { notify('Copy to clipboard failed.', 'error'); return; }
+  state.data.meta.lastBackupAt = nowISO();
+  state.data.meta.entryCountAtLastBackup = state.data.entries.length;
+  await save();
+  notify('Backup JSON copied to clipboard.', 'ok');
+  render();
+}
+
+function openMoreMenu() {
+  openModal(`
+    <h3>More actions</h3>
+    <div class="menu-list">
+      <button class="menu-item" data-act="copy-all">
+        <span class="menu-item-label">Copy all entries</span>
+        <span class="menu-item-desc">Copy every entry to the clipboard. Does not change export flags.</span>
+      </button>
+      <button class="menu-item" data-act="copy-range">
+        <span class="menu-item-label">Copy by date range</span>
+        <span class="menu-item-desc">Pick a window and copy whatever falls inside it.</span>
+      </button>
+      <button class="menu-item" data-act="backup">
+        <span class="menu-item-label">Back up data</span>
+        <span class="menu-item-desc">Download a JSON file of everything, or copy it to the clipboard.</span>
+      </button>
+      <button class="menu-item" data-act="restore">
+        <span class="menu-item-label">Restore from backup</span>
+        <span class="menu-item-desc">Load a backup file and merge or replace your current data.</span>
+      </button>
+      <button class="menu-item" data-act="snapshots">
+        <span class="menu-item-label">Snapshots</span>
+        <span class="menu-item-desc">Roll back to a recent automatic snapshot.</span>
+      </button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-tertiary" id="more-close-btn">Close</button>
+    </div>
+  `);
+  const handlers = {
+    'copy-all': copyAll,
+    'copy-range': openCopyRange,
+    'backup': openBackupMenu,
+    'restore': openRestoreMenu,
+    'snapshots': openSnapshotsMenu,
+  };
+  document.querySelectorAll('.menu-item[data-act]').forEach((b) => {
+    b.addEventListener('click', () => {
+      const fn = handlers[b.dataset.act];
+      closeModal();
+      if (fn) fn();
+    });
+  });
+  document.getElementById('more-close-btn').addEventListener('click', closeModal);
+}
+
+function openBackupMenu() {
+  openModal(`
+    <h3>Backup</h3>
+    <p class="modal-help">Saves a JSON file of your full dataset — entries, chips, and metadata. Keep at least one copy off-device.</p>
+    <div class="modal-actions stacked">
+      <button class="btn btn-primary" id="bk-file-btn">Download as file</button>
+      <button class="btn btn-secondary" id="bk-clip-btn">Copy JSON to clipboard</button>
+      <button class="btn btn-tertiary" id="bk-cancel-btn">Cancel</button>
+    </div>
+  `);
+  document.getElementById('bk-file-btn').addEventListener('click', async () => { await backupToFile(); closeModal(); });
+  document.getElementById('bk-clip-btn').addEventListener('click', async () => { await backupToClipboard(); closeModal(); });
+  document.getElementById('bk-cancel-btn').addEventListener('click', closeModal);
+}
+
+function openRestoreMenu() {
+  openModal(`
+    <h3>Restore from backup</h3>
+    <p class="modal-help">Upload a backup file or paste JSON. Then choose Merge (dedupe by id, keep newest) or Replace (overwrite everything).</p>
+    <div class="form-row"><span>File</span><input type="file" id="restore-file" accept="application/json,.json"></div>
+    <textarea class="restore-textarea" id="restore-paste" placeholder="…or paste backup JSON here"></textarea>
+    <div class="modal-actions stacked">
+      <button class="btn btn-primary" id="restore-merge-btn">Merge (keep both, dedupe by id)</button>
+      <button class="btn btn-danger" id="restore-replace-btn">Replace (overwrite current)</button>
+      <button class="btn btn-tertiary" id="restore-cancel-btn">Cancel</button>
+    </div>
+  `);
+
+  document.getElementById('restore-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      document.getElementById('restore-paste').value = text;
+    } catch (err) {
+      notify('File read failed: ' + (err.message || err), 'error');
+    }
+  });
+
+  async function doRestore(mode) {
+    const text = (document.getElementById('restore-paste').value || '').trim();
+    if (!text) { notify('Paste backup JSON or upload a file first.', 'warn'); return; }
+
+    let parsed;
+    try { parsed = JSON.parse(text); }
+    catch (e) { notify('Invalid JSON: ' + e.message, 'error'); return; }
+
+    const migrated = migrate(parsed);
+    if (!isValidData(migrated)) { notify('Backup is not a valid tracker dataset.', 'error'); return; }
+
+    if (mode === 'replace') {
+      if (!confirm(`Replace will overwrite ALL current data (${state.data.entries.length} entries) with ${migrated.entries.length} from the backup. Continue?`)) return;
+      await takeSnapshot(JSON.parse(JSON.stringify(state.data)));
+      const prev = state.data;
+      state.data = migrated;
+      const ok = await save({ snapshot: false });
+      if (!ok) { state.data = prev; return; }
+    } else {
+      const prev = JSON.parse(JSON.stringify(state.data));
+      await takeSnapshot(prev);
+
+      const byId = new Map();
+      for (const e of state.data.entries) byId.set(e.id, e);
+      let added = 0, updated = 0;
+      for (const e of migrated.entries) {
+        const existing = byId.get(e.id);
+        if (!existing) { byId.set(e.id, e); added++; }
+        else {
+          const eAt = new Date(e.updatedAt || e.timestamp).getTime();
+          const exAt = new Date(existing.updatedAt || existing.timestamp).getTime();
+          if (eAt > exAt) { byId.set(e.id, e); updated++; }
+        }
+      }
+      state.data.entries = Array.from(byId.values());
+
+      const chipSet = new Set(state.data.chips);
+      for (const c of migrated.chips) chipSet.add(c);
+      state.data.chips = Array.from(chipSet);
+
+      const ok = await save({ snapshot: false });
+      if (!ok) { state.data = prev; return; }
+      notify(`Merged: ${added} new, ${updated} updated. ${state.data.entries.length} total.`, 'ok');
+      closeModal();
+      render();
+      return;
+    }
+
+    notify(`Restored: ${state.data.entries.length} entries.`, 'ok');
+    closeModal();
+    render();
+  }
+
+  document.getElementById('restore-merge-btn').addEventListener('click', () => doRestore('merge'));
+  document.getElementById('restore-replace-btn').addEventListener('click', () => doRestore('replace'));
+  document.getElementById('restore-cancel-btn').addEventListener('click', closeModal);
+}
+
+// ============================================================================
+// Snapshots UI
+// ============================================================================
+async function openSnapshotsMenu() {
+  let snaps;
+  try { snaps = db ? await idbGetAll(SNAP_STORE) : []; }
+  catch (e) { notify('Could not load snapshots: ' + (e.message || e), 'error'); return; }
+  snaps.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+  let listHtml = '';
+  if (snaps.length === 0) {
+    listHtml = '<div class="empty">No snapshots yet. Taken automatically as you add entries.</div>';
+  } else {
+    listHtml = '<ul class="snapshot-list">';
+    for (const s of snaps) {
+      const display = new Date(s.timestamp).toLocaleString();
+      const count = (s.data && Array.isArray(s.data.entries)) ? s.data.entries.length : '?';
+      listHtml += `<li class="snapshot-item">
+        <div class="snapshot-meta">
+          <div class="snapshot-time">${display}</div>
+          <div class="snapshot-count">${count} entries</div>
+        </div>
+        <button class="btn btn-secondary" data-ts="${s.timestamp}">Restore</button>
+      </li>`;
+    }
+    listHtml += '</ul>';
+  }
+
+  openModal(`
+    <h3>Snapshots</h3>
+    <p class="modal-help">Up to ${MAX_SNAPSHOTS} rolling local snapshots. Restoring rolls your data back to that point; the current state is snapshotted first so you can undo.</p>
+    ${listHtml}
+    <div class="modal-actions">
+      <button class="btn btn-tertiary" id="snap-close-btn">Close</button>
+    </div>
+  `);
+  document.getElementById('snap-close-btn').addEventListener('click', closeModal);
+  document.querySelectorAll('.snapshot-item button[data-ts]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const ts = btn.dataset.ts;
+      if (!confirm(`Restore to snapshot from ${new Date(ts).toLocaleString()}? Current state will be snapshotted first.`)) return;
+      const rec = await idbGet(SNAP_STORE, ts);
+      if (!rec) { notify('Snapshot not found.', 'error'); return; }
+      const migrated = migrate(rec.data);
+      if (!isValidData(migrated)) { notify('Snapshot is corrupt.', 'error'); return; }
+      await takeSnapshot(JSON.parse(JSON.stringify(state.data)));
+      const prev = state.data;
+      state.data = migrated;
+      const ok = await save({ snapshot: false });
+      if (!ok) { state.data = prev; return; }
+      notify('Restored from snapshot.', 'ok');
+      closeModal();
+      render();
+    });
+  });
+}
+
+// ============================================================================
+// Persistence status
+// ============================================================================
+async function checkPersistence() {
+  const indicator = document.getElementById('persistence-status');
+  if (state.previewMode) {
+    indicator.innerHTML = '<span class="dot dot-warn"></span> Preview only';
+    indicator.title = "This window can't save anything. Open the file directly in your browser to use it for real.";
+    return;
+  }
+  if (!navigator.storage || !navigator.storage.persisted) {
+    indicator.innerHTML = '<span class="dot dot-warn"></span> Back up often';
+    indicator.title = "This browser can't promise to keep your data safe long-term. Back up regularly using the Backup button.";
+    return;
+  }
+  let persisted = false;
+  try {
+    persisted = await navigator.storage.persisted();
+    if (!persisted && navigator.storage.persist) {
+      persisted = await navigator.storage.persist();
+    }
+  } catch (e) {
+    console.error('persist() failed', e);
+  }
+  state.storagePersistent = persisted;
+  if (persisted) {
+    indicator.innerHTML = '<span class="dot dot-ok"></span> Saved safely';
+    indicator.title = "Your browser has promised not to evict this app's data under storage pressure.";
+  } else {
+    indicator.innerHTML = '<span class="dot dot-warn"></span> Back up often';
+    indicator.title = "Your browser may delete this app's data under storage pressure or after a period of inactivity. Use the Backup button regularly.";
+  }
+}
+
+// ============================================================================
+// Toast / Banner
+// ============================================================================
+function notify(msg, level = 'ok') {
+  const container = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast toast-${level}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('visible'));
+  setTimeout(() => {
+    el.classList.remove('visible');
+    setTimeout(() => el.remove(), 250);
+  }, 3800);
+}
+
+function showBanner(msg, level = 'warn') {
+  const container = document.getElementById('banners');
+  const el = document.createElement('div');
+  el.className = `banner banner-${level}`;
+  el.innerHTML = '<span class="banner-text"></span><button class="banner-dismiss">Dismiss</button>';
+  el.querySelector('.banner-text').textContent = msg;
+  el.querySelector('.banner-dismiss').addEventListener('click', () => el.remove());
+  container.appendChild(el);
+}
+
+// ============================================================================
+// Modal helpers
+// ============================================================================
+function openModal(html) {
+  const overlay = document.getElementById('modal-overlay');
+  const content = document.getElementById('modal-content');
+  content.innerHTML = html;
+  overlay.classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+  document.getElementById('modal-content').innerHTML = '';
+  state.deletingId = null;
+}
+
+// ============================================================================
+// Textarea auto-grow
+// ============================================================================
+function autoResize(textarea) {
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.min(textarea.scrollHeight, 240) + 'px';
+}
+
+// ============================================================================
+// Init
+// ============================================================================
+async function init() {
+  const ctx = detectStorageAvailability();
+
+  // Surface ONE clear, plain-language banner up front. Everything downstream
+  // uses these flags instead of dumping raw exception text into the UI.
+  if (ctx.ephemeral || (!ctx.lsOk && !ctx.idbOk)) {
+    state.previewMode = true;
+    if (ctx.ephemeral) {
+      showBanner(
+        "This is a preview window — your entries won't be saved here. To use the tracker for real, open index.html directly in your browser (double-click the file, or host it on a server).",
+        'info'
+      );
+    } else {
+      showBanner(
+        "Your browser is blocking all local storage, so entries won't be saved across reloads. Try opening this file in a different browser, or check your privacy / cookie settings.",
+        'error'
+      );
+    }
+  } else if (ctx.idbOk) {
+    try {
+      db = await openDB();
+    } catch (_) {
+      ctx.idbOk = false;
+      if (ctx.lsOk) {
+        showBanner("Your browser's primary storage isn't available. Entries will save to a backup copy only — please back up often using the Backup button.", 'warn');
+      }
+    }
+  }
+
+  if (!ctx.lsOk && !state.previewMode) {
+    showBanner("Your browser's backup storage isn't available. Entries are still being saved, but please back up to a file regularly.", 'warn');
+  }
+
+  if (state.previewMode) {
+    state.data = newEmptyData();
+    seedDummyData(state.data);
+  } else {
+    const { data, source } = await loadData();
+    state.data = data;
+    if (db && (source === 'ls' || source === 'ls-only')) {
+      // re-sync so both layers agree next load
+      try { await save({ snapshot: false }); } catch (_) {}
+    }
+    if (state.data.entries.length === 0) {
+      seedDummyData(state.data);
+      await save({ snapshot: false });
+    }
+    await ensureInitialSnapshot(state.data);
+  }
+
+  checkPersistence();
+
+  // Bind capture
+  const ta = document.getElementById('entry-textarea');
+  const dateEl = document.getElementById('entry-date');
+  const timeEl = document.getElementById('entry-time');
+  const addBtn = document.getElementById('entry-add-btn');
+
+  const cur = nowISO();
+  dateEl.value = toDateInput(cur);
+  timeEl.value = toTimeInput(cur);
+
+  ta.addEventListener('input', () => autoResize(ta));
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      addEntry();
+    }
+  });
+  addBtn.addEventListener('click', addEntry);
+
+  document.getElementById('copy-since-btn').addEventListener('click', copySinceLastExport);
+  document.getElementById('more-btn').addEventListener('click', openMoreMenu);
+
+  document.getElementById('modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // Keep the date/time fields current if the page stays open without
+  // user interaction. Only update when the user hasn't manually changed them.
+  setInterval(() => {
+    const focused = document.activeElement;
+    if (focused !== dateEl && focused !== timeEl && ta.value.trim() === '') {
+      const c = nowISO();
+      dateEl.value = toDateInput(c);
+      timeEl.value = toTimeInput(c);
+    }
+  }, 30 * 1000);
+
+  render();
+  ta.focus();
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
