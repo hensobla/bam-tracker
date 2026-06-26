@@ -698,6 +698,13 @@ button, input, textarea { font-family: inherit; color: inherit; }
 .menu-item:active { transform: scale(0.99); }
 .menu-item-label { font-size: 14.5px; font-weight: 600; letter-spacing: -0.005em; }
 .menu-item-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.4; }
+.menu-item-danger { border-color: #fecaca; }
+.menu-item-danger:hover { background: var(--error-bg); border-color: #fca5a5; }
+.menu-item-danger .menu-item-label { color: var(--danger); }
+@media (prefers-color-scheme: dark) {
+  .menu-item-danger { border-color: rgba(248, 113, 113, 0.30); }
+  .menu-item-danger:hover { background: rgba(248, 113, 113, 0.10); border-color: rgba(248, 113, 113, 0.50); }
+}
 .modal-actions {
   display: flex;
   gap: 8px;
@@ -1159,7 +1166,7 @@ function newEmptyData() {
     schemaVersion: SCHEMA_VERSION,
     entries: [],
     chips: [...DEFAULT_CHIPS],
-    meta: { lastBackupAt: null, entryCountAtLastBackup: 0 },
+    meta: { lastBackupAt: null, entryCountAtLastBackup: 0, hasSeeded: false },
     // Tombstones for entries that were exported in a prior batch and then
     // deleted locally. Flushed (and cleared) by the next copy-since-last-export
     // so the downstream AI can drop them from its records.
@@ -1215,7 +1222,8 @@ function migrate(raw) {
     meta: (raw.meta && typeof raw.meta === 'object') ? {
       lastBackupAt: typeof raw.meta.lastBackupAt === 'string' ? raw.meta.lastBackupAt : null,
       entryCountAtLastBackup: typeof raw.meta.entryCountAtLastBackup === 'number' ? raw.meta.entryCountAtLastBackup : 0,
-    } : { lastBackupAt: null, entryCountAtLastBackup: 0 },
+      hasSeeded: raw.meta.hasSeeded === true,
+    } : { lastBackupAt: null, entryCountAtLastBackup: 0, hasSeeded: false },
     pendingDeletions: Array.isArray(raw.pendingDeletions)
       ? raw.pendingDeletions.filter((t) => t && typeof t === 'object' && typeof t.timestamp === 'string')
       : [],
@@ -2233,6 +2241,10 @@ function openMoreMenu() {
         <span class="menu-item-label">Snapshots</span>
         <span class="menu-item-desc">Roll back to a recent automatic snapshot.</span>
       </button>
+      <button class="menu-item menu-item-danger" data-act="clear">
+        <span class="menu-item-label">Clear all data</span>
+        <span class="menu-item-desc">Wipe every entry, chip override, snapshot, and queue. Use this once after testing to start fresh.</span>
+      </button>
     </div>
     <div class="modal-actions">
       <button class="btn btn-tertiary" id="more-close-btn">Close</button>
@@ -2244,6 +2256,7 @@ function openMoreMenu() {
     'backup': openBackupMenu,
     'restore': openRestoreMenu,
     'snapshots': openSnapshotsMenu,
+    'clear': openClearDataConfirm,
   };
   document.querySelectorAll('.menu-item[data-act]').forEach((b) => {
     b.addEventListener('click', () => {
@@ -2253,6 +2266,56 @@ function openMoreMenu() {
     });
   });
   document.getElementById('more-close-btn').addEventListener('click', closeModal);
+}
+
+function openClearDataConfirm() {
+  const count = state.data.entries.length;
+  openModal(`
+    <h3>Clear all data?</h3>
+    <p class="modal-help">This wipes every entry (${count}), all chips back to defaults, every snapshot, and every pending deletion/export marker. A backup file is downloaded first so you can restore if you change your mind.</p>
+    <p class="modal-help" style="color: var(--danger);"><strong>This cannot be undone from inside the app.</strong></p>
+    <div class="modal-actions stacked">
+      <button class="btn btn-danger" id="clear-confirm-btn">Download backup and clear everything</button>
+      <button class="btn btn-tertiary" id="clear-cancel-btn">Cancel</button>
+    </div>
+  `);
+  document.getElementById('clear-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('clear-confirm-btn').addEventListener('click', clearAllData);
+}
+
+async function clearAllData() {
+  // Safety net first: dump whatever's there to a JSON file so the user has
+  // an off-ramp if they panic. If there's nothing to back up, skip the file.
+  try {
+    if (state.data.entries.length > 0) {
+      const content = JSON.stringify(state.data, null, 2);
+      downloadFile(backupFilename(), content);
+    }
+  } catch (e) {
+    console.error('pre-clear backup download failed', e);
+  }
+
+  // Wipe IndexedDB snapshots too — keeping them defeats the "start fresh" intent.
+  if (db) {
+    try {
+      const snaps = await idbGetAll(SNAP_STORE);
+      for (const s of snaps) await idbDelete(SNAP_STORE, s.timestamp);
+    } catch (e) { console.error('snapshot wipe failed', e); }
+  }
+
+  state.data = newEmptyData();
+  // Mark as already-seeded so the demo entries don't return on next load.
+  state.data.meta.hasSeeded = true;
+  state.lastSnapshotTime = 0;
+
+  const ok = await save({ snapshot: false });
+  if (!ok) {
+    notify('Clear failed — your data was not wiped.', 'error');
+    return;
+  }
+  closeModal();
+  render();
+  notify('All data cleared. Starting fresh.', 'ok');
 }
 
 function openBackupMenu() {
@@ -2577,8 +2640,11 @@ async function init() {
       // re-sync so both layers agree next load
       try { await save({ snapshot: false }); } catch (_) {}
     }
-    if (state.data.entries.length === 0) {
+    // Seed demo entries only the first time — once we've ever seeded (or
+    // the user has explicitly cleared everything), don't re-populate.
+    if (state.data.entries.length === 0 && !state.data.meta.hasSeeded) {
       seedDummyData(state.data);
+      state.data.meta.hasSeeded = true;
       await save({ snapshot: false });
     }
     await ensureInitialSnapshot(state.data);
