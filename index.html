@@ -488,31 +488,32 @@ button, input, textarea { font-family: inherit; color: inherit; }
   text-transform: uppercase;
 }
 
+/* Entries are a repeated journal stream — the research consensus (Notes,
+   Things, Linear, Notion, M3 Lists) is to favor list rows over heavy card
+   chrome. Keeps border + shadow as ONE strategy (subtle shadow only), not
+   both stacked. Status channels capped at two: tinted background + dot. */
 .entry {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius-lg);
-  padding: 10px 12px 12px;
+  padding: 14px 16px 16px;
   margin-top: 8px;
   box-shadow: var(--shadow-xs);
-  transition: border-color 0.12s, box-shadow 0.12s;
+  transition: box-shadow 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
-.entry:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
-.entry.uncopied {
-  background: var(--uncopied-bg);
-  border-color: #fed7aa;
+.entry:hover { box-shadow: var(--shadow-sm); }
+.entry.uncopied { background: var(--uncopied-bg); }
+.entry.editing {
+  padding: 16px;
+  border-color: var(--border);
 }
-@media (prefers-color-scheme: dark) {
-  .entry.uncopied { border-color: rgba(251, 146, 60, 0.25); }
-}
-.entry.editing { padding: 14px; }
 
 .entry-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 28px;
-  margin-bottom: 2px;
+  gap: 10px;
+  min-height: 20px;
+  margin-bottom: 6px;
 }
 .entry-header-meta {
   display: flex;
@@ -522,30 +523,28 @@ button, input, textarea { font-family: inherit; color: inherit; }
   min-width: 0;
 }
 .entry-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18);
   flex-shrink: 0;
 }
 .entry-time {
   font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--text-muted);
+  font-size: 11px;
+  color: var(--text-soft);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.entry.uncopied .entry-time { color: var(--uncopied-accent); }
 .entry-text {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 15.5px;
+  line-height: 1.55;
   letter-spacing: -0.005em;
   color: var(--text);
 }
@@ -554,6 +553,9 @@ button, input, textarea { font-family: inherit; color: inherit; }
   gap: 2px;
   align-items: center;
   flex-shrink: 0;
+  /* Pulls the action cluster's hit zone into the tile's padding without
+     visually overflowing — wider tap target without changing the layout. */
+  margin: -8px -8px -8px 0;
 }
 
 .btn-icon {
@@ -562,21 +564,36 @@ button, input, textarea { font-family: inherit; color: inherit; }
   color: var(--text-soft);
   cursor: pointer;
   padding: 0;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.12s, color 0.12s, opacity 0.15s;
+  position: relative;
 }
 .btn-icon svg { display: block; }
+/* Extend the hit area to a comfortable 44pt without inflating the visual size. */
+.btn-icon::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
 .btn-icon:hover { background: rgba(15, 23, 42, 0.06); color: var(--text); }
 @media (prefers-color-scheme: dark) {
   .btn-icon:hover { background: rgba(255,255,255,0.06); }
 }
 .btn-icon-danger:hover { background: var(--error-bg); color: var(--danger); }
+
+/* On pointer devices, mute the edit affordance until the tile is hovered so
+   the body text dominates. Touch devices (no hover) keep it always visible. */
+@media (hover: hover) {
+  .entry .btn-icon { opacity: 0.45; }
+  .entry:hover .btn-icon,
+  .entry .btn-icon:focus-visible { opacity: 1; }
+}
 
 .entry-edit { display: flex; flex-direction: column; gap: 10px; }
 .edit-dt-row { display: flex; gap: 8px; }
@@ -909,7 +926,7 @@ button, input, textarea { font-family: inherit; color: inherit; }
   .main { padding: 16px 14px 96px; }
   .header-inner { padding: 12px 14px; }
   .title { font-size: 17px; }
-  .entry { padding: 10px 10px 12px; }
+  .entry { padding: 12px 14px 14px; }
   .capture { padding: 12px 14px; }
   .modal-content { padding: 20px; border-radius: var(--radius-lg); }
 }
