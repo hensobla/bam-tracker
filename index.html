@@ -489,54 +489,55 @@ button, input, textarea { font-family: inherit; color: inherit; }
 }
 
 .entry {
-  display: grid;
-  grid-template-columns: 60px 1fr auto;
-  column-gap: 14px;
-  align-items: center;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 12px 12px 12px 36px;
+  padding: 10px 12px 12px;
   margin-top: 8px;
   box-shadow: var(--shadow-xs);
   transition: border-color 0.12s, box-shadow 0.12s;
-  position: relative;
-  min-height: 56px;
 }
 .entry:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
 .entry.uncopied {
   background: var(--uncopied-bg);
   border-color: #fed7aa;
 }
-.entry.uncopied::before {
-  content: "";
-  position: absolute;
-  left: 18px;
-  top: 24px;
+@media (prefers-color-scheme: dark) {
+  .entry.uncopied { border-color: rgba(251, 146, 60, 0.25); }
+}
+.entry.editing { padding: 14px; }
+
+.entry-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  margin-bottom: 2px;
+}
+.entry-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.entry-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18);
-}
-.entry.uncopied.editing::before { display: none; }
-@media (prefers-color-scheme: dark) {
-  .entry.uncopied { border-color: rgba(251, 146, 60, 0.25); }
-}
-.entry.editing {
-  grid-template-columns: 1fr;
-  align-items: stretch;
-  padding: 14px;
+  flex-shrink: 0;
 }
 .entry-time {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  letter-spacing: 0;
-  text-align: right;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 .entry.uncopied .entry-time { color: var(--uncopied-accent); }
 .entry-text {
@@ -544,14 +545,15 @@ button, input, textarea { font-family: inherit; color: inherit; }
   word-break: break-word;
   overflow-wrap: anywhere;
   font-size: 15px;
-  line-height: 1.45;
+  line-height: 1.5;
   letter-spacing: -0.005em;
-  min-width: 0;
+  color: var(--text);
 }
 .entry-actions {
   display: flex;
   gap: 2px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .btn-icon {
@@ -907,8 +909,7 @@ button, input, textarea { font-family: inherit; color: inherit; }
   .main { padding: 16px 14px 96px; }
   .header-inner { padding: 12px 14px; }
   .title { font-size: 17px; }
-  .entry { grid-template-columns: 52px 1fr auto; padding: 10px 10px 10px 30px; column-gap: 10px; }
-  .entry.uncopied::before { left: 14px; top: 21px; }
+  .entry { padding: 10px 10px 12px; }
   .capture { padding: 12px 14px; }
   .modal-content { padding: 20px; border-radius: var(--radius-lg); }
 }
@@ -936,7 +937,7 @@ button, input, textarea { font-family: inherit; color: inherit; }
     <div class="capture-row">
       <button type="button" id="entry-now-btn" class="hidden" aria-label="Reset to current date and time">Now</button>
       <input type="date" id="entry-date" aria-label="Date">
-      <input type="time" id="entry-time" aria-label="Time">
+      <input type="time" id="entry-time" aria-label="Time" step="300">
       <button id="entry-add-btn" class="btn btn-primary" aria-label="Add entry"></button>
     </div>
     <div id="chips-row" class="chips-row"></div>
@@ -1023,6 +1024,16 @@ function generateId() {
 }
 
 function nowISO() { return new Date().toISOString(); }
+
+// "Now" rounded to the nearest 5 minutes, for the date/time pickers (which
+// step in 5-minute increments). Always returns a value that aligns with the
+// picker grid, so the initial display matches what the wheel will offer.
+function roundedNowISO() {
+  const d = new Date();
+  const rounded = Math.round(d.getMinutes() / 5) * 5;
+  d.setMinutes(rounded, 0, 0);
+  return d.toISOString();
+}
 
 // Split a chip string into { label, inject }. Single-line chips have the same
 // value for both. Multi-line chips: first line is the chip's label, the rest is
@@ -1592,6 +1603,7 @@ function renderEntry(entry) {
     const timeEl = document.createElement('input');
     timeEl.type = 'time';
     timeEl.className = 'edit-datetime';
+    timeEl.step = '300';
     timeEl.value = toTimeInput(entry.timestamp);
     dtRow.appendChild(dateEl);
     dtRow.appendChild(timeEl);
@@ -1638,13 +1650,21 @@ function renderEntry(entry) {
     return el;
   }
 
+  const header = document.createElement('div');
+  header.className = 'entry-header';
+
+  const meta = document.createElement('div');
+  meta.className = 'entry-header-meta';
+  if (!entry.exported) {
+    const dot = document.createElement('span');
+    dot.className = 'entry-dot';
+    dot.setAttribute('aria-label', 'Not yet exported');
+    meta.appendChild(dot);
+  }
   const timeEl = document.createElement('div');
   timeEl.className = 'entry-time';
   timeEl.textContent = formatTimeOfDay(entry.timestamp);
-
-  const textEl = document.createElement('div');
-  textEl.className = 'entry-text';
-  textEl.textContent = entry.text;
+  meta.appendChild(timeEl);
 
   const actions = document.createElement('div');
   actions.className = 'entry-actions';
@@ -1656,9 +1676,15 @@ function renderEntry(entry) {
   editBtn.addEventListener('click', () => startEntryEdit(entry.id));
   actions.appendChild(editBtn);
 
-  el.appendChild(timeEl);
+  header.appendChild(meta);
+  header.appendChild(actions);
+
+  const textEl = document.createElement('div');
+  textEl.className = 'entry-text';
+  textEl.textContent = entry.text;
+
+  el.appendChild(header);
   el.appendChild(textEl);
-  el.appendChild(actions);
   return el;
 }
 
@@ -1722,7 +1748,7 @@ async function addEntry() {
 
   ta.value = '';
   ta.style.height = '';
-  const cur = nowISO();
+  const cur = roundedNowISO();
   dateEl.value = toDateInput(cur);
   timeEl.value = toTimeInput(cur);
   const nowBtn = document.getElementById('entry-now-btn');
@@ -2687,18 +2713,18 @@ async function init() {
   // button itself, and as the recovery path when the OS picker's "Reset"
   // wipes the field to blank on iOS.
   function resetDateTimeToNow() {
-    const c = nowISO();
+    const c = roundedNowISO();
     dateEl.value = toDateInput(c);
     timeEl.value = toTimeInput(c);
     nowBtn.classList.add('hidden');
   }
 
   // Reveal the Now button whenever the picker is no longer on the current
-  // minute. Cheaper than comparing Date objects — comparing the same string
-  // form the inputs use.
+  // 5-minute slot. Cheaper than comparing Date objects — comparing the same
+  // string form the inputs use.
   function updateNowButton() {
     if (!dateEl.value || !timeEl.value) { nowBtn.classList.add('hidden'); return; }
-    const c = nowISO();
+    const c = roundedNowISO();
     const isNow = dateEl.value === toDateInput(c) && timeEl.value === toTimeInput(c);
     nowBtn.classList.toggle('hidden', isNow);
   }
